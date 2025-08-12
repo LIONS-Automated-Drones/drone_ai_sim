@@ -12,11 +12,14 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from langgraph.graph import StateGraph, END
 
+from drone_service import DroneService
+
 # Load environment variables from .env file
 load_dotenv()
 
+
 # --- 1. Define a Single, Simplified Tool ---
-# We are mocking the drone connection for this simple test.
+drone_service = DroneService()
 
 class TakeoffTool(BaseTool):
     name: str = "arm_and_takeoff"
@@ -27,9 +30,20 @@ class TakeoffTool(BaseTool):
 
 
     async def _arun(self, *args, **kwargs) -> str:
-        """Simulates the async takeoff process."""
-        print("--- EXECUTING TOOL: Simulating arm and takeoff... ---")
-        await asyncio.sleep(2) # Mock the time it takes to perform the action
+        """Connects, arms, and takes off the drone."""
+        print("--- EXECUTING TOOL: Connecting and taking off... ---")
+        connected = await drone_service.connect()
+        if not connected:
+            return "Failed to connect to the drone."
+        
+        armed = await drone_service.arm()
+        if not armed:
+            return "Failed to arm the drone."
+
+        took_off = await drone_service.takeoff()
+        if not took_off:
+            return "Failed to take off."
+
         return "Takeoff sequence initiated successfully. The drone is now airborne."
 
 # --- 2. Setup the Agent ---
