@@ -76,6 +76,10 @@ def get_cardinal_and_move(current_lat, current_lon, cardinal_direction, distance
         "NW": 315,
     }
     
+    # if distance_m is a string, convert to float
+    if isinstance(distance_m, str):
+        distance_m = float(distance_m)
+
     bearing_deg = cardinal_angles.get(cardinal_direction, 0)
     bearing_rad = math.radians(bearing_deg)
 

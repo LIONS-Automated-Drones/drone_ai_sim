@@ -1,6 +1,7 @@
 import asyncio
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
+from utils import calculate_distance
 
 class DroneService:
     """A wrapper class for MAVSDK to simplify drone control."""
@@ -44,8 +45,15 @@ class DroneService:
             print("--- Drone not connected. Cannot take off.")
             return False
         print("--- Taking off...")
+        takeoff_altitude = await self.drone.action.get_takeoff_altitude()
+        print(f"--- Takeoff altitude: {takeoff_altitude}m")
         await self.drone.action.takeoff()
-        await asyncio.sleep(5) # Wait for takeoff to complete
+        while True:
+            position = await anext(self.drone.telemetry.position())
+            if abs(position.absolute_altitude_m - takeoff_altitude) < 0.25:
+                print("--- Drone has reached takeoff altitude.")
+                break
+            await asyncio.sleep(1)
         return True
 
     async def land(self):
@@ -57,6 +65,10 @@ class DroneService:
             return False
         print("--- Landing...")
         await self.drone.action.land()
+        async for in_air in self.drone.telemetry.in_air():
+            if not in_air:
+                print("--- Drone has landed.")
+                break
         return True
 
     async def goto_location(self, latitude_deg, longitude_deg, altitude_m, yaw_deg):
@@ -73,7 +85,20 @@ class DroneService:
             return False
         print(f"--- Flying to {latitude_deg}, {longitude_deg} at {altitude_m}m...")
         await self.drone.action.goto_location(latitude_deg, longitude_deg, altitude_m, yaw_deg)
-        await asyncio.sleep(10)
+        
+        while True:
+            position = await anext(self.drone.telemetry.position())
+            distance = calculate_distance(
+                position.latitude_deg,
+                position.longitude_deg,
+                latitude_deg,
+                longitude_deg
+            )
+            if distance < 1:  # 1-meter tolerance
+                print("--- Arrived at target location.")
+                break
+            await asyncio.sleep(1)
+            
         return True
 
     async def do_orbit(self, radius_m: float, velocity_ms: float):
@@ -108,6 +133,10 @@ class DroneService:
             return False
         print("--- Returning to launch location...")
         await self.drone.action.return_to_launch()
+        async for in_air in self.drone.telemetry.in_air():
+            if not in_air:
+                print("--- Drone has landed at launch point.")
+                break
         return True
     
     async def get_telemetry(self):
