@@ -1,5 +1,6 @@
 import re
 from state import AgentState
+from utils import parse_tool_call_from_text
 
 def route_agent_response(state: AgentState, tool_names):
     """
@@ -10,11 +11,7 @@ def route_agent_response(state: AgentState, tool_names):
     if last_message.tool_calls:
         return "continue"
 
-    # A more general pattern to catch any plausible-looking tool call.
-    tool_pattern = r'\{\s*"name"\s*:\s*".+?".*?\}'
-    match = re.search(tool_pattern, last_message.content, re.DOTALL)
-    
-    if match:
+    if parse_tool_call_from_text(last_message.content):
         return "clarify"
     
     return "end"

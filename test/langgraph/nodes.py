@@ -1,6 +1,9 @@
+import re
+import json
 from langchain_core.messages import HumanMessage, ToolMessage
 from state import AgentState
 from tools import get_tools
+from utils import parse_tool_call_from_text
 
 # Get the list of tools
 tools = get_tools()
@@ -48,11 +51,25 @@ async def sequential_tool_node(state: AgentState) -> dict:
 def ask_for_clarification_node(state: AgentState) -> dict:
     """
     The node that asks the agent for clarification if it detects a text-based tool call.
+    It parses the attempted tool call to provide more specific feedback.
     """
+    last_message = state["messages"][-1]
+    
+    # Default feedback message
     feedback_message = (
         "SYSTEM NOTE: I detected what looks like a tool call in your text response. "
-        "This is not the correct way to call a tool. "
+        "NO TOOLS WERE EXECUTED. This is not the correct way to call a tool. "
         "If you intended to execute an action, please call the tool again using the proper tool-calling feature. "
         "If you intended to just display the JSON as part of your thought process, please rephrase your response without the JSON formatting."
     )
+
+    # Try to parse the specific tool name for better feedback
+    tool_name = parse_tool_call_from_text(last_message.content)
+    if tool_name:
+        feedback_message = (
+            f"SYSTEM NOTE: The '{tool_name}' tool WAS NOT CALLED. "
+            "I detected that you tried to call a tool in your text response. This is not the correct way to call a tool. "
+            f"To call the '{tool_name}' tool, you MUST use the tool-calling feature instead of writing it in the content."
+        )
+
     return {"messages": [HumanMessage(content=feedback_message)]}

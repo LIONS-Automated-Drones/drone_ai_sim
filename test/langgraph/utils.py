@@ -1,4 +1,6 @@
 import math
+import re
+import json
 
 def get_location_metres(original_latitude, original_longitude, d_north, d_east):
     """
@@ -104,3 +106,25 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.asin(math.sqrt(a))
     r = 6371000  # Radius of earth in meters
     return c * r
+
+def parse_tool_call_from_text(text: str) -> str | None:
+    """
+    Parses a tool call from a string of text and returns the tool's name
+    using a regex capture group, which is more robust than parsing JSON.
+
+    Args:
+        text (str): The text to search for a tool call.
+
+    Returns:
+        The name of the tool if found, otherwise None.
+    """
+    # This regex looks for a "name" key and captures its string value.
+    # It avoids parsing the full JSON, making it more robust.
+    tool_pattern = r'\{\s*"name"\s*:\s*"(.+?)"'
+    match = re.search(tool_pattern, text)
+
+    if match:
+        # The first capture group contains the tool name.
+        return match.group(1)
+        
+    return None

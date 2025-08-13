@@ -32,7 +32,7 @@ class TakeoffTool(BaseTool):
         return "Takeoff sequence initiated successfully. The drone is now airborne."
 
 class LandTool(BaseTool):
-    name: str = "land_drone"
+    name: str = "land"
     description: str = "Lands the drone at its current position."
 
     def _run(self, *args, **kwargs) -> str:
