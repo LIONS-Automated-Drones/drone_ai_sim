@@ -1,6 +1,7 @@
 import asyncio
 from langchain.tools import BaseTool
 from drone_service import DroneService
+from utils import get_bearing_and_move, get_cardinal_and_move
 
 # Create a single instance of our drone interface
 drone_service = DroneService()
@@ -43,18 +44,58 @@ class LandTool(BaseTool):
         landed = await drone_service.land()
         return "Landed successfully." if landed else "Landing failed."
 
-class GoToTool(BaseTool):
-    name: str = "go_to_location"
-    description: str = "Flies the drone to a specific GPS coordinate."
+class MoveRelativeBodyTool(BaseTool):
+    name: str = "move_relative_body"
+    description: str = "Moves the drone a specified distance in a direction relative to its current heading (e.g., 'forward', 'left', 'back_right')."
 
-    def _run(self, latitude_deg: float, longitude_deg: float, altitude_m: float, yaw_deg: float, *args, **kwargs) -> str:
+    def _run(self, direction: str, distance_m: float, *args, **kwargs) -> str:
         raise NotImplementedError("This tool does not support synchronous execution.")
 
-    async def _arun(self, latitude_deg: float, longitude_deg: float, altitude_m: float, yaw_deg: float, *args, **kwargs) -> str:
-        """Flies to a specific location."""
-        print(f"--- EXECUTING TOOL: Flying to {latitude_deg}, {longitude_deg}... ---")
-        success = await drone_service.goto_location(latitude_deg, longitude_deg, altitude_m, yaw_deg)
-        return "Successfully flew to location." if success else "Failed to fly to location."
+    async def _arun(self, direction: str, distance_m: float, *args, **kwargs) -> str:
+        """Moves the drone relative to its body."""
+        print(f"--- EXECUTING TOOL: Moving {distance_m}m {direction}... ---")
+        telemetry = await drone_service.get_telemetry()
+        if not telemetry:
+            return "Failed to get current telemetry. Cannot move."
+
+        new_lat, new_lon = get_bearing_and_move(
+            telemetry["latitude_deg"],
+            telemetry["longitude_deg"],
+            telemetry["heading_deg"],
+            direction,
+            distance_m
+        )
+        
+        success = await drone_service.goto_location(
+            new_lat, new_lon, telemetry["absolute_altitude_m"], telemetry["heading_deg"]
+        )
+        return f"Successfully moved {distance_m}m {direction}." if success else "Failed to move."
+
+class MoveRelativeNorthTool(BaseTool):
+    name: str = "move_relative_north"
+    description: str = "Moves the drone a specified distance in a cardinal direction (e.g., 'N', 'E', 'SW')."
+
+    def _run(self, direction: str, distance_m: float, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, direction: str, distance_m: float, *args, **kwargs) -> str:
+        """Moves the drone in a cardinal direction."""
+        print(f"--- EXECUTING TOOL: Moving {distance_m}m {direction}... ---")
+        telemetry = await drone_service.get_telemetry()
+        if not telemetry:
+            return "Failed to get current telemetry. Cannot move."
+
+        new_lat, new_lon = get_cardinal_and_move(
+            telemetry["latitude_deg"],
+            telemetry["longitude_deg"],
+            direction,
+            distance_m
+        )
+
+        success = await drone_service.goto_location(
+            new_lat, new_lon, telemetry["absolute_altitude_m"], telemetry["heading_deg"]
+        )
+        return f"Successfully moved {distance_m}m {direction}." if success else "Failed to move."
 
 class OrbitTool(BaseTool):
     name: str = "fly_in_a_circle"
@@ -95,7 +136,7 @@ class TelemetryTool(BaseTool):
         data = await drone_service.get_telemetry()
         return str(data) if data else "Could not retrieve telemetry."
     
-tools = [TakeoffTool(), LandTool(), GoToTool(), OrbitTool(), RTLTool(), TelemetryTool()]
+tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool()]
 
 def get_tools():
     return tools
