@@ -45,7 +45,7 @@ class LandTool(BaseTool):
         return "Landed successfully." if landed else "Landing failed."
 
 class MoveRelativeBodyTool(BaseTool):
-    name: str = "move_relative_body"
+    name: str = "move_relative_self"
     description: str = "Moves the drone a specified distance in a direction relative to its current heading (e.g., 'forward', 'left', 'back_right')."
 
     def _run(self, direction: str, distance_m: float, *args, **kwargs) -> str:
@@ -72,7 +72,7 @@ class MoveRelativeBodyTool(BaseTool):
         return f"Successfully moved {distance_m}m {direction}." if success else "Failed to move."
 
 class MoveRelativeNorthTool(BaseTool):
-    name: str = "move_relative_north"
+    name: str = "move_relative_cardinal"
     description: str = "Moves the drone a specified distance in a cardinal direction (e.g., 'N', 'E', 'SW')."
 
     def _run(self, direction: str, distance_m: float, *args, **kwargs) -> str:
@@ -135,8 +135,20 @@ class TelemetryTool(BaseTool):
         print("--- EXECUTING TOOL: Fetching telemetry... ---")
         data = await drone_service.get_telemetry()
         return str(data) if data else "Could not retrieve telemetry."
+
+class MissionCompleteTool(BaseTool):
+    name: str = "mission_complete"
+    description: str = "Call this tool when the entire mission is successfully completed. Provide a final summary of the mission as an argument."
+
+    def _run(self, summary: str) -> str:
+        """Marks the mission as complete."""
+        return f"Mission complete: {summary}"
+
+    async def _arun(self, summary: str) -> str:
+        """Marks the mission as complete."""
+        return f"Mission complete: {summary}"
     
-tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool()]
+tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool(), MissionCompleteTool()]
 
 def get_tools():
     return tools

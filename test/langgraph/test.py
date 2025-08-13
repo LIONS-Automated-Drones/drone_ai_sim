@@ -1,19 +1,25 @@
 import asyncio
 import os
+import operator
+from typing import TypedDict, Annotated, List
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_openai import ChatOpenAI
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode, tools_condition
 
 from tools import get_tools
-from graph import build_graph
 
 # Load environment variables from .env file
 load_dotenv()
 
-# --- 1. Setup the Agent ---
+# --- 1. Define the Agent State ---
+class AgentState(TypedDict):
+    messages: Annotated[List[BaseMessage], operator.add]
+
+# --- 2. Setup the Agent ---
 tools = get_tools()
 llm = ChatOpenAI(
     model=os.getenv("OLLAMA_MODEL"),
@@ -25,19 +31,35 @@ llm = ChatOpenAI(
 # The agent's "brain" that decides which tool to call
 agent_prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a drone pilot AI. Your job is to call the correct tools to execute the user's mission. Respond with a final summary when the mission is complete."),
+        ("system", "You are a drone pilot AI. Your job is to execute the user's mission by calling tools one at a time. Think step-by-step. When the entire mission is complete, and only then, call the 'mission_complete' tool with a summary of what you did."),
         MessagesPlaceholder(variable_name="messages"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
 )
-agent = create_tool_calling_agent(llm, tools, agent_prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
+agent = agent_prompt | llm.bind_tools(tools)
 
-# --- 2. Build and Compile the Graph ---
-app = build_graph(agent_executor)
+# --- 3. Build the Graph ---
+workflow = StateGraph(AgentState)
 
-# --- 3. Run the Test ---
+# The agent node, which reasons about the next action
+def call_model(state):
+    response = agent.invoke(state)
+    return {"messages": [response]}
+
+workflow.add_node("agent", call_model)
+workflow.add_node("tools", ToolNode(tools))
+
+workflow.set_entry_point("agent")
+
+# The conditional edge that decides where to go next
+workflow.add_conditional_edges("agent", tools_condition)
+
+# Connect the tool node back to the agent
+workflow.add_edge("tools", "agent")
+
+app = workflow.compile()
+
+# --- 4. Run the Test ---
 async def main():
     print("--- Starting LangGraph Test ---")
     prompt_count = 1
@@ -46,16 +68,13 @@ async def main():
         if mission_prompt.lower() in ["quit", "exit"]:
             break
 
-        # astream() lets us see the output of each node as it runs
         async for event in app.astream({"messages": [HumanMessage(content=mission_prompt)]}):
-            # Print the final result from the agent node
-            if "agent" in event:
-                print("\n--- FINAL AGENT RESPONSE ---")
-                print(event["agent"]["messages"])
+            for v in event.values():
+                if "messages" in v:
+                    print(v["messages"][-1].content)
         
         print(f"\nPrompt {prompt_count} Completed Successfully!")
         prompt_count += 1
-
 
 if __name__ == "__main__":
     asyncio.run(main())
