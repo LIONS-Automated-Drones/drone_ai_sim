@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug LangGraph Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/langgraph/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
