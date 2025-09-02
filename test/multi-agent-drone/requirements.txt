@@ -1,0 +1,7 @@
+# requirements.txt
+langchain
+langgraph
+langchain-openai
+mavsdk
+python-dotenv
+numpy
