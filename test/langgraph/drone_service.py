@@ -23,6 +23,10 @@ class DroneService:
             if state.is_connected:
                 print("--- Drone connected!")
                 self.is_connected = True
+                async for health in self.drone.telemetry.health():
+                    print("--- Health status ---")
+                    print(health)
+                    break
                 return True
         return False
 
