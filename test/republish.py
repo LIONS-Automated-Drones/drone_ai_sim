@@ -1,26 +1,77 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import Image, CameraInfo
+import yaml
+from pathlib import Path
 
-class CameraInfoRelay(Node):
+
+def load_camera_info(yaml_path: str, frame_id: str) -> CameraInfo:
+    with open(yaml_path, 'r') as f:
+        calib_data = yaml.safe_load(f)
+
+    msg = CameraInfo()
+    msg.width = calib_data['image_width']
+    msg.height = calib_data['image_height']
+    msg.distortion_model = calib_data['distortion_model']
+    msg.d = calib_data['distortion_coefficients']['data']
+    msg.k = calib_data['camera_matrix']['data']
+    msg.r = calib_data['rectification_matrix']['data']
+    msg.p = calib_data['projection_matrix']['data']
+    msg.header.frame_id = frame_id   # force the correct TF frame
+    return msg
+
+
+class CameraInfoRepublisher(Node):
     def __init__(self):
-        super().__init__('camera_info_relay')
-        self.sub = self.create_subscription(CameraInfo, '/stereo/camera_info', self.callback, 10)
-        self.pub_left = self.create_publisher(CameraInfo, '/stereo/left/camera_info', 10)
-        self.pub_right = self.create_publisher(CameraInfo, '/stereo/right/camera_info', 10)
-        self.get_logger().info("Relaying /stereo/camera_info -> /stereo/left/camera_info and /stereo/right/camera_info")
+        super().__init__('stereo_camera_info_republisher')
 
-    def callback(self, msg):
-        self.pub_left.publish(msg)
-        self.pub_right.publish(msg)
+        left_yaml = str(Path.home() / '.ros/camera_info/stereo_left.yaml')
+        right_yaml = str(Path.home() / '.ros/camera_info/stereo_right.yaml')
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = CameraInfoRelay()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+        self.left_info = load_camera_info(left_yaml, "stereo_left_link")
+        self.right_info = load_camera_info(right_yaml, "stereo_right_link")
+
+        # Publishers for CameraInfo
+        self.left_info_pub = self.create_publisher(CameraInfo, '/stereo/left/camera_info', 10)
+        self.right_info_pub = self.create_publisher(CameraInfo, '/stereo/right/camera_info', 10)
+
+        # Publishers for corrected Images
+        self.left_img_pub = self.create_publisher(Image, '/stereo/left_rect', 10)
+        self.right_img_pub = self.create_publisher(Image, '/stereo/right_rect', 10)
+
+        # Subscriptions to raw Gazebo image topics
+        self.create_subscription(Image, '/stereo/left', self.left_callback, 10)
+        self.create_subscription(Image, '/stereo/right', self.right_callback, 10)
+
+    def left_callback(self, msg: Image):
+        # Fix frame_id for image
+        msg.header.frame_id = "stereo_left_link"
+        self.left_img_pub.publish(msg)
+
+        # Sync camera_info timestamp and publish
+        self.left_info.header.stamp = msg.header.stamp
+        self.left_info_pub.publish(self.left_info)
+
+    def right_callback(self, msg: Image):
+        msg.header.frame_id = "stereo_right_link"
+        self.right_img_pub.publish(msg)
+
+        self.right_info.header.stamp = msg.header.stamp
+        self.right_info_pub.publish(self.right_info)
+
+
+def main():
+    rclpy.init()
+    node = CameraInfoRepublisher()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

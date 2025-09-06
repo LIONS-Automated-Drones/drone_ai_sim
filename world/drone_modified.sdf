@@ -73,6 +73,18 @@
       <motorType>velocity</motorType>
     </plugin>
 
+    <plugin name="gz::sim::systems::OdometryPublisher"
+            filename="gz-sim-odometry-publisher-system">
+      <ros>
+        <namespace>/x500</namespace>
+      </ros>
+      <odom_topic>odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
+      <publish_tf>true</publish_tf>
+    </plugin>
+
+
     <!-- Left camera -->
     <link name="stereo_left_link">
       <pose>0.1 0 0.05 0 0 0</pose>

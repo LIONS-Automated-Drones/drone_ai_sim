@@ -12,12 +12,16 @@ from graph import build_graph
 # Load environment variables from .env file
 load_dotenv()
 
+model = os.getenv("OLLAMA_MODEL")
+base_url = os.getenv("OLLAMA_BASE_URL")
+print(f"Using model: {model} and base url: {base_url}")
+
 # --- 1. Setup the Agent ---
 tools = get_tools()
 tool_names = [tool.name for tool in tools]
 llm = ChatOpenAI(
-    model=os.getenv("OLLAMA_MODEL"),
-    openai_api_base=os.getenv("OLLAMA_BASE_URL") + "/v1",
+    model=model,
+    openai_api_base=base_url + "/v1",
     openai_api_key="ollama",
     temperature=0,
 )
