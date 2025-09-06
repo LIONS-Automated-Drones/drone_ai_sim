@@ -7,9 +7,9 @@ class CameraInfoRelay(Node):
     def __init__(self):
         super().__init__('camera_info_relay')
         self.sub = self.create_subscription(CameraInfo, '/stereo/camera_info', self.callback, 10)
-        self.pub_left = self.create_publisher(CameraInfo, '/left/camera_info', 10)
-        self.pub_right = self.create_publisher(CameraInfo, '/right/camera_info', 10)
-        self.get_logger().info("Relaying /stereo/camera_info -> /left/camera_info and /right/camera_info")
+        self.pub_left = self.create_publisher(CameraInfo, '/stereo/left/camera_info', 10)
+        self.pub_right = self.create_publisher(CameraInfo, '/stereo/right/camera_info', 10)
+        self.get_logger().info("Relaying /stereo/camera_info -> /stereo/left/camera_info and /stereo/right/camera_info")
 
     def callback(self, msg):
         self.pub_left.publish(msg)
