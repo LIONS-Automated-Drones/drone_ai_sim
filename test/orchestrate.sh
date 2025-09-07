@@ -1,4 +1,11 @@
 #!/bin/bash
+
+# Source ROS setup
+source /opt/ros/jazzy/setup.bash
+
+# Activate your venv
+source ~/sd1_ws/drone_venv/bin/activate
+
 ros2 run ros_gz_bridge parameter_bridge \
   /stereo/left@sensor_msgs/msg/Image@gz.msgs.Image \
   /stereo/right@sensor_msgs/msg/Image@gz.msgs.Image \
