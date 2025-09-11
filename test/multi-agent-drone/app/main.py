@@ -6,7 +6,8 @@ from langchain_core.messages import HumanMessage
 from graph import build_graph
 
 # Load environment variables
-load_dotenv(dotenv_path='../.env')
+#load_dotenv(dotenv_path='../.env')
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 async def main():
     app = build_graph()
@@ -18,9 +19,7 @@ async def main():
         if mission.lower() in ["quit", "exit"]:
             break
 
-        events = app.astream(
-            {"messages": [HumanMessage(content=mission)]}
-        )
+        events = app.astream({"messages": [HumanMessage(content=mission)]})
 
         async for event in events:
             for key, value in event.items():

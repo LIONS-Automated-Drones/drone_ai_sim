@@ -3,8 +3,10 @@ from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
 from utils import calculate_distance
 
+
 class DroneService:
     """A wrapper class for MAVSDK to simplify drone control."""
+
     def __init__(self):
         self.drone = System()
         self.is_connected = False
@@ -15,15 +17,26 @@ class DroneService:
         """
         if self.is_connected:
             return True
-            
-        print("--- Connecting to drone...")
-        await self.drone.connect(system_address="udp://:14540")
 
-        async for state in self.drone.core.connection_state():
-            if state.is_connected:
-                print("--- Drone connected!")
-                self.is_connected = True
-                return True
+        print("--- Connecting to drone...")
+        try:
+            await self.drone.connect(system_address="udp://:14540")
+
+            # Wait for connection with timeout
+            timeout_count = 0
+            async for state in self.drone.core.connection_state():
+                if state.is_connected:
+                    print("--- Drone connected!")
+                    self.is_connected = True
+                    return True
+                timeout_count += 1
+                if timeout_count > 10:  # 10 second timeout
+                    print("--- Connection timeout. Make sure Gazebo is running!")
+                    return False
+                await asyncio.sleep(1)
+        except Exception as e:
+            print(f"--- Connection failed: {e}")
+            return False
         return False
 
     async def arm(self):
@@ -85,20 +98,20 @@ class DroneService:
             return False
         print(f"--- Flying to {latitude_deg}, {longitude_deg} at {altitude_m}m...")
         await self.drone.action.goto_location(latitude_deg, longitude_deg, altitude_m, yaw_deg)
-        
+
         while True:
             position = await anext(self.drone.telemetry.position())
             distance = calculate_distance(
                 position.latitude_deg,
                 position.longitude_deg,
                 latitude_deg,
-                longitude_deg
+                longitude_deg,
             )
             if distance < 1:  # 1-meter tolerance
                 print("--- Arrived at target location.")
                 break
             await asyncio.sleep(1)
-            
+
         return True
 
     async def do_orbit(self, radius_m: float, velocity_ms: float):
@@ -108,7 +121,7 @@ class DroneService:
         if not self.is_connected:
             print("--- Drone note connected. Cannot orbit.")
             return False
-        
+
         position = await anext(self.drone.telemetry.position())
         altitude = position.absolute_altitude_m
 
@@ -119,11 +132,11 @@ class DroneService:
             yaw_behavior=OrbitYawBehavior.HOLD_FRONT_TANGENT_TO_CIRCLE,
             latitude_deg=position.latitude_deg,
             longitude_deg=position.longitude_deg,
-            absolute_altitude_m=altitude
+            absolute_altitude_m=altitude,
         )
         await asyncio.sleep(15)
         return True
-    
+
     async def return_to_launch(self):
         """
         Commands the drone to return to its takeoff location and land.
@@ -138,7 +151,7 @@ class DroneService:
                 print("--- Drone has landed at launch point.")
                 break
         return True
-    
+
     async def get_telemetry(self):
         """
         Gets the current telemetry data from the drone.
@@ -148,7 +161,7 @@ class DroneService:
         if not self.is_connected:
             print("--- Drone not connected. Cannot get telemetry.")
             return None
-            
+
         try:
             # Get the first available telemetry data
             position = await anext(self.drone.telemetry.position())
@@ -161,13 +174,16 @@ class DroneService:
                 "absolute_altitude_m": position.absolute_altitude_m,
                 "relative_altitude_m": position.relative_altitude_m,
                 "heading_deg": heading.heading_deg,
-                "is_in_air": is_in_air
+                "is_in_air": is_in_air,
             }
             return telemetry_data
         except Exception as e:
             print(f"--- Error getting telemetry: {e}")
             return None
 
+
 # Helper to fix a common issue with anext in some environments
 async def anext(ait):
     return await ait.__anext__()
+
+

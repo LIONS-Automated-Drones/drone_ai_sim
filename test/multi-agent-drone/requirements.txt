@@ -2,6 +2,7 @@
 langchain
 langgraph
 langchain-openai
+langchain-ollama
 mavsdk
 python-dotenv
 numpy
