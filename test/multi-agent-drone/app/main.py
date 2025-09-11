@@ -12,7 +12,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 async def main():
     app = build_graph()
     print("--- Multi-Agent Drone System Initialized ---")
-    print("--- Gazebo simulation should be running via Docker Compose ---")
+    # print("--- Gazebo simulation should be running via Docker Compose ---")
     
     while True:
         mission = input("Enter your mission: ")

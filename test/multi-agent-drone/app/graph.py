@@ -16,7 +16,10 @@ def _route_agent(state: AgentState) -> str:
     latest user message content. Defaults to pilot for safety-critical actions.
     """
     last = state["messages"][-1]
-    content = last.content.lower() if isinstance(last, HumanMessage) else ""
+    # If last message isn't from the user, don't auto-route; wait for next input
+    if not isinstance(last, HumanMessage):
+        return END
+    content = last.content.lower()
 
     vision_keywords: List[str] = [
         "see", "look", "detect", "recognize", "identify", "image", "photo", "picture",
@@ -91,6 +94,9 @@ async def _tool_node(state: AgentState):
         ToolMessage(content=str(response), tool_call_id=tool_call["id"])
     ]
 
+    # No need for followup logic since vision tool handles landing directly
+    has_followup = False
+
     if len(last_message.tool_calls) > 1:
         messages_to_add.append(
             HumanMessage(
@@ -102,7 +108,7 @@ async def _tool_node(state: AgentState):
             )
         )
 
-    return {"messages": messages_to_add}
+    return {"messages": messages_to_add, "has_followup": has_followup}
 
 
 def _route_after_agent(state: AgentState, tool_names):
@@ -116,6 +122,13 @@ def _route_after_agent(state: AgentState, tool_names):
     if re.search(r"\{\s*\"name\"\s*:\s*\".+?\"", content):
         return "clarify"
 
+    return END
+
+
+def _route_after_tools(state: AgentState):
+    """Route after tool execution - continue if there's a followup, otherwise end."""
+    if state.get("has_followup", False):
+        return "router"
     return END
 
 
@@ -183,9 +196,13 @@ def build_graph():
         {"tools": "tools", "clarify": "clarify", END: END},
     )
 
-    # Loop back after tool execution
-    workflow.add_edge("tools", "router")
-    workflow.add_edge("clarify", "router")
+    # Route after tool execution - continue if followup, otherwise end
+    workflow.add_conditional_edges(
+        "tools",
+        _route_after_tools,
+        {"router": "router", END: END},
+    )
+    workflow.add_edge("clarify", END)
 
     return workflow.compile()
 
