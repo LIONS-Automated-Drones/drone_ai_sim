@@ -16,13 +16,18 @@ load_dotenv()
 class AnalyzeImageTool(BaseTool):
     name: str = "analyze_image"
     description: str = "Analyzes the image at 'image.jpeg' and answers a question about it. Always use 'image.jpeg' as the image_path parameter."
+    
+    def __init__(self):
+        super().__init__()
+        self._request_count = 0
 
     def _run(self, image_path: str, question: str, *args, **kwargs) -> str:
         raise NotImplementedError("This tool does not support synchronous execution.")
 
     async def _arun(self, image_path: str, question: str, *args, **kwargs) -> str:
         """Analyzes an image from the given path and answers a question about it."""
-        print(f"--- VLM: Analyzing {image_path} for '{question}'... ---")
+        self._request_count += 1
+        print(f"--- VLM: Analyzing {image_path} for '{question}'... (Request #{self._request_count}) ---")
         
         try:
             # Handle relative paths - look in the app directory
@@ -111,16 +116,16 @@ class AnalyzeImageTool(BaseTool):
                 return f"Error: Unexpected error during VLM request: {e}"
             
             # Check if bicycle is detected and handle landing
-            if "bicycle" in vlm_result.lower() or "bike" in vlm_result.lower():
+            if "car" in vlm_result.lower() or "bike" in vlm_result.lower():
                 from agents.pilot import drone_service
-                print("--- VLM: Detected bicycle, calling pilot to land... ---")
+                print("--- VLM: Detected car, calling pilot to land... ---")
                 success = await drone_service.land()
                 if success:
-                    return f"VLM Analysis: {vlm_result}. Drone has been commanded to land."
+                    return f"{vlm_result}\n\nDrone has been commanded to land."
                 else:
-                    return f"VLM Analysis: {vlm_result}. Landing command failed."
+                    return f"{vlm_result}\n\nLanding command failed."
             else:
-                return f"VLM Analysis: {vlm_result}"
+                return vlm_result
                 
         except Exception as e:
             print(f"--- VLM: Error during analysis: {e} ---")
