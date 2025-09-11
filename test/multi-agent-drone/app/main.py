@@ -2,7 +2,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from graph import build_graph
 
 # Load environment variables
@@ -25,12 +25,18 @@ async def main():
             for key, value in event.items():
                 if key != "__end__":
                     print(f"--- Event: {key} ---")
-                    if "messages" in value:
-                        last_message = value['messages'][-1]
-                        if last_message.tool_calls:
-                             print(f"Tool Call: {last_message.tool_calls[0]['name']} with args {last_message.tool_calls[0]['args']}")
+                    if "messages" in value and value["messages"]:
+                        last_message = value["messages"][-1]
+                        if isinstance(last_message, AIMessage):
+                            if getattr(last_message, "tool_calls", None):
+                                tc = last_message.tool_calls[0]
+                                print(f"Tool Call: {tc['name']} with args {tc['args']}")
+                            else:
+                                print(f"Message: {last_message.content}")
+                        elif isinstance(last_message, ToolMessage):
+                            print(f"Tool Result: {last_message.content}")
                         else:
-                             print(f"Message: {last_message.content}")
+                            print(getattr(last_message, "content", ""))
 
 if __name__ == "__main__":
     asyncio.run(main())
