@@ -64,7 +64,7 @@ class DroneService:
                 break
             await asyncio.sleep(1)
             if i % 10 == 0:
-                mission_log(f"--- Drone has not reached takeoff altitude. Current altitude: {position.absolute_altitude_m}m, target altitude: {takeoff_altitude}m")
+                mission_log(f"--- Drone has not reached takeoff altitude. Current altitude: {position.absolute_altitude_m}m, target altitude: {target_altitude}m")
             i += 1
         return True
 
