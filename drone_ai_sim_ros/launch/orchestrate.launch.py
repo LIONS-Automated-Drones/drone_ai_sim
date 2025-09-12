@@ -117,4 +117,16 @@ def generate_launch_description():
                 "queue_size": 20,
             }],
         ),
+
+        # Web video server
+        Node(
+            package="web_video_server",
+            executable="web_video_server",
+            name="web_video_server",
+            output="screen",
+            parameters=[{
+                "address": "0.0.0.0",
+                "port": 8080,
+            }],
+        ),
     ])
