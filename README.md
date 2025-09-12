@@ -4,6 +4,20 @@ Senior Design 1 Project: LIONS Automated Drone System (Agentic AI)
 #### Setting up WSL environment
 Follow directions in `wsl.md` to setup wsl2 environment on windows. If you aren't on windows ¯\_(ツ)_/¯
 
+#### Seting up depot world
+Go to the link below and download the world and unzip
+`https://app.gazebosim.org/OpenRobotics/fuel/models/Depot`
+```bash
+mkdir -p ~/.gz/models
+# Copy to models folder
+cp -r /mnt/c/Users/YOUR_USERNAME/Downloads/Depot ~/.gz/models/
+touch depot.sdf
+nano depot.sdf
+# Paste code from /world/depot.sdf and then save
+# DO NOT FORGET TO UPDATE /homo/connor/ to your
+# username before pasting
+```
+
 #### Building package
 ```bash
 cd ~/sd1_ws/ # One level up from github repo
