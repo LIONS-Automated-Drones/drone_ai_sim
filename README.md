@@ -1,6 +1,9 @@
 # lions-automated-drones
 Senior Design 1 Project: LIONS Automated Drone System (Agentic AI)
 
+#### Setting up WSL environment
+Follow directions in `wsl.md` to setup wsl2 environment on windows. If you aren't on windows ¯\_(ツ)_/¯
+
 #### Building package
 ```bash
 cd ~/sd1_ws/ # One level up from github repo
