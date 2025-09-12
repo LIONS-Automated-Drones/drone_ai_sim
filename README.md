@@ -48,7 +48,7 @@ export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
 export GALLIUM_DRIVER=d3d12
 ```
 #### GPU Acceleration in WSL
-If you have a NVIDIA gpu and update your with what I provided,
+If you have a NVIDIA gpu and update your bashrc with what I provided,
 WSL should use GPU acceleration which will make gazebo simulation run much faster. You can confirm this by running
 `glxinfo | grep "OpenGL renderer"`. For me, this outputs: 
 "OpenGL renderer string: D3D12 (NVIDIA GeForce RTX 4050 Laptop GPU)". If you have a different type of gpu, you will need to do
