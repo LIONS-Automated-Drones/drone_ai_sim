@@ -44,7 +44,7 @@ You should see [INFO] [1757130632.075320083] [talker]: Publishing: 'Hello World:
 #### drone_ai_sim repo setup
 ```bash
 cd ~/sd1_ws/
-https://github.com/LIONS-Automated-Drones/drone_ai_sim
+git clone https://github.com/LIONS-Automated-Drones/drone_ai_sim
 cd drone_ai_sim/
 git checkout dev
 ```
