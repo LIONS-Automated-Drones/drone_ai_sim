@@ -87,7 +87,7 @@
 
     <!-- Left camera -->
     <link name="stereo_left_link">
-      <pose>0.1 -0.06 0.05 0 0 0</pose>
+      <pose>0.1 0.06 0.05 0 0 0</pose>
       <inertial>
         <mass>0.005</mass>
         <inertia>
@@ -129,7 +129,7 @@
 
     <!-- Right camera -->
     <link name="stereo_right_link">
-      <pose>0.1 0.06 0.05 0 0 0</pose>
+      <pose>0.1 -0.06 0.05 0 0 0</pose>
       <inertial>
         <mass>0.005</mass>
         <inertia>
