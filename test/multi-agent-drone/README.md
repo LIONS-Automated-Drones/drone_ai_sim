@@ -7,18 +7,38 @@ A proof-of-concept multi-agent drone system that combines a **Pilot Agent** and 
 ### Prerequisites
 
 1. **Python Environment**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 2. **Ollama Models**
    Ensure you have these models running on your Ollama server:
+
    - `llama3.2-vision:11b` (for image analysis)
    - `llama3.1:8b` (for vision agent tool calling)
 
 3. **Gazebo Simulation**
    - Start Gazebo simulation environment
    - Ensure drone simulation is running and accessible
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in the `app/` directory:
+
+```
+VIRTUAL=true (make this false if you are connecting to the real drone via serial)
+
+OLLAMA_BASE_URL=http://<ollama_machine_ip>:11434
+
+OLLAMA_MODEL=llama3.1:8b
+
+OLLAMA_VLM_MODEL=llama3.2-vision:11b
+```
+
+- **NOTE** you need to pull these models from ollama beforehand
 
 ### Running the System
 
@@ -37,7 +57,7 @@ python main.py
 
 1. **User Input**: Natural language commands are processed by the router
 2. **Agent Selection**: Router determines whether to use pilot or vision agent
-3. **Vision Analysis**: 
+3. **Vision Analysis**:
    - Vision agent calls `analyze_image` tool
    - Tool reads `image.jpeg` from app directory
    - Makes VLM request to Ollama with base64-encoded image
@@ -48,26 +68,19 @@ python main.py
 ## Architecture
 
 ### Agents
+
 - **Pilot Agent**: Controls drone operations (takeoff, landing, movement) using MAVSDK
 - **Vision Agent**: Analyzes images using Ollama VLM and triggers pilot actions based on visual content
 
 ### Key Features
+
 - **Real VLM Integration**: Uses Ollama's `llama3.2-vision` for actual image analysis
 - **Shared Drone Service**: Both agents use the same connected drone instance
 - **Context-Driven Actions**: Vision analysis triggers specific pilot behaviors
 - **Single Request Optimization**: Each vision query makes only one VLM request
 
-## Configuration
-
-### Environment Variables
-Create a `.env` file in the `app/` directory:
-```
-OLLAMA_BASE_URL=http://<ollama_machine_ip>:11434
-OLLAMA_MODEL=llama3.1:8b
-OLLAMA_VLM_MODEL=llama3.2-vision:11b
-```
-
 ### Image Analysis
+
 - Place your test image as `image.jpeg` in the `app/` directory
 - The system will analyze this image when vision commands are issued
 
