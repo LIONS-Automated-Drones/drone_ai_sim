@@ -1,7 +1,12 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
 from utils import calculate_distance
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class DroneService:
@@ -10,17 +15,32 @@ class DroneService:
     def __init__(self):
         self.drone = System()
         self.is_connected = False
+        
+        # Load connection settings from environment variables
+        self.virtual = os.getenv('VIRTUAL', 'true').lower() == 'true'
+        self.serial_port = os.getenv('SERIAL_PORT', '/dev/tty.usbserial-0001')
+        self.baud_rate = int(os.getenv('BAUD_RATE', '57600'))
+        self.udp_address = os.getenv('UDP_ADDRESS', 'udp://:14540')
 
     async def connect(self):
         """
-        Connects to the simulated drone.
+        Connects to the drone - either virtual (Gazebo UDP) or physical (Serial SiK radio).
         """
         if self.is_connected:
             return True
 
-        print("--- Connecting to drone...")
+        if self.virtual:
+            print("--- Connecting to virtual drone (Gazebo)...")
+            connection_string = self.udp_address
+        else:
+            print(f"--- Connecting to physical drone via SiK radio...")
+            print(f"--- Serial port: {self.serial_port}, Baud rate: {self.baud_rate}")
+            connection_string = f"serial://{self.serial_port}:{self.baud_rate}"
+            
+        print(f"--- Connection string: {connection_string}")
+
         try:
-            await self.drone.connect(system_address="udp://:14540")
+            await self.drone.connect(system_address=connection_string)
 
             # Wait for connection with timeout
             timeout_count = 0
@@ -31,7 +51,10 @@ class DroneService:
                     return True
                 timeout_count += 1
                 if timeout_count > 10:  # 10 second timeout
-                    print("--- Connection timeout. Make sure Gazebo is running!")
+                    if self.virtual:
+                        print("--- Connection timeout. Make sure Gazebo is running!")
+                    else:
+                        print("--- Connection timeout. Check SiK radio connection and settings!")
                     return False
                 await asyncio.sleep(1)
         except Exception as e:
