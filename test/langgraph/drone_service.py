@@ -1,24 +1,43 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
 from utils import calculate_distance
 from mission_log import mission_log
+
+# Load environment variables from .env file
+load_dotenv()
 
 class DroneService:
     """A wrapper class for MAVSDK to simplify drone control."""
     def __init__(self):
         self.drone = System()
         self.is_connected = False
+        
+        # Load connection settings from environment variables
+        self.virtual = os.getenv('VIRTUAL', 'true').lower() == 'true'
+        self.serial_port = os.getenv('SERIAL_PORT', '/dev/tty.usbserial-0001')
+        self.baud_rate = int(os.getenv('BAUD_RATE', '57600'))
+        self.udp_address = os.getenv('UDP_ADDRESS', 'udp://:14540')
 
     async def connect(self):
         """
-        Connects to the simulated drone.
+        Connects to the drone - either virtual (Gazebo UDP) or physical (Serial SiK radio).
         """
         if self.is_connected:
             return True
+        
+        if self.virtual:
+            mission_log("--- Connecting to virtual drone (Gazebo)...")
+            connection_string = self.udp_address
+        else:
+            mission_log(f"--- Connecting to physical drone via SiK radio...")
+            mission_log(f"--- Serial port: {self.serial_port}, Baud rate: {self.baud_rate}")
+            connection_string = f"serial://{self.serial_port}:{self.baud_rate}"
             
-        mission_log("--- Connecting to drone...")
-        await self.drone.connect(system_address="udp://:14540")
+        mission_log(f"--- Connection string: {connection_string}")
+        await self.drone.connect(system_address=connection_string)
 
         async for state in self.drone.core.connection_state():
             if state.is_connected:
