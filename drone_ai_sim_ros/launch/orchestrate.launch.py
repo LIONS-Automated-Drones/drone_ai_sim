@@ -16,7 +16,12 @@ def generate_launch_description():
                 "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
             ],
         ),
-
+        Node(
+            package="drone_ai_sim_ros",
+            executable="odom_tf_broadcaster",
+            name="odom_tf_broadcaster",
+            output="screen",
+        ),
         # Static TFs
         Node(
             package="tf2_ros",
