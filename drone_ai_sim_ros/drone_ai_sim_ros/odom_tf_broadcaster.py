@@ -9,6 +9,7 @@ class OdomTFPublisher(Node):
         super().__init__('odom_tf_broadcaster')
         self.tf_broadcaster = TransformBroadcaster(self)
         self.sub = self.create_subscription(Odometry, '/odom', self.callback, 10)
+        self.get_logger().info("odom_tf_broadcaster node started. Listening to /odom")
 
     def callback(self, msg: Odometry):
         t = TransformStamped()
