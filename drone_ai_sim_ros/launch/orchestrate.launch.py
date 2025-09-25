@@ -122,6 +122,30 @@ def generate_launch_description():
                 "queue_size": 20,
             }],
         ),
+        # RTAB-Map SLAM
+        Node(
+            package="rtabmap_slam",
+            executable="rtabmap",
+            name="rtabmap",
+            output="screen",
+            parameters=[{
+                "frame_id": "base_link",
+                "subscribe_stereo": True,
+                "approx_sync": True,
+                "subscribe_odom": True,
+                "delete_db_on_start": True,
+                "publish_tf": True,
+                "publish_odom_tf": False,
+                "publish_trajectory": True,
+            }],
+            remappings=[
+                ("odom", "/odom"),
+                ("left/image_rect", "/stereo/left/image_rect"),
+                ("right/image_rect", "/stereo/right/image_rect"),
+                ("left/camera_info", "/stereo/left/camera_info"),
+                ("right/camera_info", "/stereo/right/camera_info"),
+            ],
+        ),
 
         # Web video server
         Node(
