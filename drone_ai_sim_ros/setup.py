@@ -25,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'republish = drone_ai_sim_ros.republish:main',
-            'odom_tf_broadcaster = drone_ai_sim_ros.odom_tf_broadcaster:main'
+            'odom_tf_broadcaster = drone_ai_sim_ros.odom_tf_broadcaster:main',
+            'trajectory_pub = drone_ai_sim_ros.trajectory_pub:main'
         ],
     },
 )
