@@ -23,12 +23,12 @@ def generate_launch_description():
             output="screen",
         ),
         # Static TFs
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="odom_to_baselink",
-            arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "base_link"],
-        ),
+        # Node(
+        #     package="tf2_ros",
+        #     executable="static_transform_publisher",
+        #     name="odom_to_baselink",
+        #     arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "base_link"],
+        # ),
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
