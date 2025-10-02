@@ -3,6 +3,9 @@ import os
 import json
 import base64
 import requests
+import re
+import cv2
+import numpy as np
 from langchain.tools import BaseTool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
@@ -11,11 +14,121 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# --- VLM AGENT TOOLS (MOCK) ---
+# --- VLM AGENT TOOLS ---
+
+def extract_target_object(mission: str) -> str:
+    """Extract the target object from the user's mission."""
+    mission_lower = mission.lower()
+    
+    # Common objects to detect
+    objects = [
+        "car", "vehicle", "automobile", "truck", "van", "suv",
+        "human", "person", "people", "man", "woman", "child", "pedestrian",
+        "bike", "bicycle", "motorcycle", "scooter",
+        "dog", "cat", "animal", "pet",
+        "building", "house", "structure",
+        "tree", "plant", "vegetation"
+    ]
+    
+    for obj in objects:
+        if obj in mission_lower:
+            return obj
+    
+    # If no specific object found, return the first noun-like word
+    words = mission_lower.split()
+    for word in words:
+        if len(word) > 3 and word not in ["if", "you", "see", "then", "land", "takeoff", "pilot", "vision", "image", "in"]:
+            return word
+    
+    return "object"  # fallback
+
+def extract_requested_action(mission: str) -> str:
+    """Extract the requested action from the user's mission."""
+    mission_lower = mission.lower()
+    
+    # Look for action keywords
+    if "takeoff" in mission_lower or "take off" in mission_lower:
+        return "takeoff"
+    elif "land" in mission_lower:
+        return "land"
+    elif "move" in mission_lower:
+        return "move"
+    elif "fly" in mission_lower:
+        return "fly"
+    
+    return "land"  # default to land for safety
+
+def capture_rtsp_frame(rtsp_url: str) -> tuple[bool, np.ndarray]:
+    """
+    Capture a single frame from the RTSP stream.
+    Returns (success, frame) tuple.
+    """
+    cap = None
+    try:
+        print(f"Attempting to connect to RTSP stream: {rtsp_url}")
+        
+        # Open the RTSP stream with timeout settings
+        cap = cv2.VideoCapture(rtsp_url)
+        
+        # Set buffer size to reduce latency
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        
+        if not cap.isOpened():
+            print(f"Error: Could not open RTSP stream at {rtsp_url}")
+            print("Possible causes:")
+            print("- RTSP server is not running")
+            print("- Network connectivity issues")
+            print("- Incorrect RTSP URL")
+            print("- Firewall blocking the connection")
+            return False, None
+        
+        # Read a single frame with timeout
+        ret, frame = cap.read()
+        
+        if not ret:
+            print("Failed to read frame from RTSP stream")
+            print("Possible causes:")
+            print("- Stream is not active")
+            print("- Network timeout")
+            print("- Stream format not supported")
+            return False, None
+        
+        if frame is None or frame.size == 0:
+            print("Received empty frame from RTSP stream")
+            return False, None
+        
+        print(f"Successfully captured frame from RTSP stream: {frame.shape}")
+        return True, frame
+        
+    except Exception as e:
+        print(f"Error capturing RTSP frame: {e}")
+        return False, None
+    finally:
+        # Always release the capture
+        if cap is not None:
+            cap.release()
+
+def frame_to_base64(frame: np.ndarray) -> str:
+    """
+    Convert OpenCV frame to base64 encoded string for VLM.
+    """
+    try:
+        # Encode frame as JPEG
+        _, buffer = cv2.imencode('.jpg', frame)
+        image_bytes = buffer.tobytes()
+        
+        # Convert to base64
+        image_data = base64.b64encode(image_bytes).decode('utf-8')
+        print(f"Converted frame to base64: {len(image_data)} characters")
+        return image_data
+        
+    except Exception as e:
+        print(f"Error converting frame to base64: {e}")
+        return None
 
 class AnalyzeImageTool(BaseTool):
     name: str = "analyze_image"
-    description: str = "Analyzes the image at 'image.jpeg' and answers a question about it. Always use 'image.jpeg' as the image_path parameter."
+    description: str = "Analyzes the live video stream and answers a question about it. Captures a frame from the RTSP stream for analysis."
     
     def __init__(self):
         super().__init__()
@@ -25,29 +138,29 @@ class AnalyzeImageTool(BaseTool):
         raise NotImplementedError("This tool does not support synchronous execution.")
 
     async def _arun(self, image_path: str, question: str, *args, **kwargs) -> str:
-        """Analyzes an image from the given path and answers a question about it."""
+        """Analyzes a live video frame from the RTSP stream and answers a question about it."""
         self._request_count += 1
-        print(f"--- VLM: Analyzing {image_path} for '{question}'... (Request #{self._request_count}) ---")
+        
+        # Extract target object and requested action from the mission
+        target_object = extract_target_object(question)
+        requested_action = extract_requested_action(question)
+        
+        print(f"--- VLM: Extracted target object: '{target_object}' and action: '{requested_action}' from mission: '{question}' ---")
         
         try:
-            # Handle relative paths - look in the app directory
-            if not os.path.isabs(image_path):
-                # Get the directory where this script is located (app directory)
-                app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                image_path = os.path.join(app_dir, image_path)
+            # Get RTSP URL from environment or use default
+            rtsp_url = os.getenv("RTSP_URL", "rtsp://192.168.64.1:8554/live")
+            print(f"--- VLM: Capturing frame from RTSP stream: {rtsp_url} ---")
             
-            print(f"--- VLM: Looking for image at: {image_path} ---")
+            # Capture frame from RTSP stream
+            success, frame = capture_rtsp_frame(rtsp_url)
+            if not success:
+                return f"Error: Could not capture frame from RTSP stream at {rtsp_url}"
             
-            # Check if file exists
-            if not os.path.exists(image_path):
-                return f"Error: Image file not found at {image_path}"
-            
-            # Read and encode the image
-            with open(image_path, "rb") as image_file:
-                image_bytes = image_file.read()
-                print(f"--- VLM: Read {len(image_bytes)} bytes from image file ---")
-                image_data = base64.b64encode(image_bytes).decode('utf-8')
-                print(f"--- VLM: Encoded to {len(image_data)} base64 characters ---")
+            # Convert frame to base64 for VLM
+            image_data = frame_to_base64(frame)
+            if not image_data:
+                return "Error: Could not convert frame to base64 for VLM analysis"
             
             # Make VLM request to Ollama
             ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -56,12 +169,16 @@ class AnalyzeImageTool(BaseTool):
             if not model:
                 return "Error: OLLAMA_VLM_MODEL environment variable not set"
             
+            # Always use simple "what's in the image" prompt
+            vlm_prompt = "What's in this image? Be specific about what you see."
+            print(f"--- VLM: Using simple prompt: '{vlm_prompt}' (Request #{self._request_count}) ---")
+            
             payload = {
                 "model": model,
                 "messages": [
                     {
                         "role": "user",
-                        "content": f"Look at this image and answer this question: {question}. Be specific about what you see in the image.",
+                        "content": vlm_prompt,
                         "images": [image_data]
                     }
                 ],
@@ -115,17 +232,60 @@ class AnalyzeImageTool(BaseTool):
             except Exception as e:
                 return f"Error: Unexpected error during VLM request: {e}"
             
-            # Check if bicycle is detected and handle landing
-            if "car" in vlm_result.lower() or "bike" in vlm_result.lower():
-                from agents.pilot import drone_service
-                print("--- VLM: Detected car, calling pilot to land... ---")
-                success = await drone_service.land()
-                if success:
-                    return f"{vlm_result}\n\nDrone has been commanded to land."
-                else:
-                    return f"{vlm_result}\n\nLanding command failed."
+            # Check if target object is detected in the response
+            vlm_result_lower = vlm_result.lower()
+            target_object_lower = target_object.lower()
+            
+            print(f"--- VLM: Checking if '{target_object_lower}' appears in response ---")
+            
+            # Check for exact match or related terms
+            detected = False
+            if target_object_lower in vlm_result_lower:
+                detected = True
             else:
-                return vlm_result
+                # Check for related terms
+                related_terms = {
+                    "car": ["vehicle", "automobile", "truck", "van", "suv", "sedan"],
+                    "human": ["person", "people", "man", "woman", "child", "pedestrian", "individual"],
+                    "bike": ["bicycle", "motorcycle", "scooter", "cycle"],
+                    "dog": ["animal", "pet", "canine"],
+                    "cat": ["animal", "pet", "feline"]
+                }
+                
+                if target_object_lower in related_terms:
+                    for term in related_terms[target_object_lower]:
+                        if term in vlm_result_lower:
+                            detected = True
+                            break
+            
+            if detected:
+                print(f"--- VLM: Detected {target_object}, executing requested action: {requested_action} ---")
+                from agents.pilot import drone_service
+                
+                # Execute the requested action
+                if requested_action == "takeoff":
+                    # Connect, arm, and takeoff
+                    if not await drone_service.connect():
+                        return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Failed to connect to drone for takeoff."
+                    if not await drone_service.arm():
+                        return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Failed to arm drone for takeoff."
+                    success = await drone_service.takeoff()
+                    if success:
+                        return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Drone has been commanded to takeoff."
+                    else:
+                        return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Takeoff command failed."
+                        
+                elif requested_action == "land":
+                    success = await drone_service.land()
+                    if success:
+                        return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Drone has been commanded to land."
+                    else:
+                        return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Landing command failed."
+                else:
+                    return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' detected. Action '{requested_action}' not implemented."
+            else:
+                print(f"--- VLM: Target object '{target_object}' not detected in image ---")
+                return f"Image analysis: {vlm_result}\n\nTarget object '{target_object}' not detected in image. No action taken."
                 
         except Exception as e:
             print(f"--- VLM: Error during analysis: {e} ---")
@@ -138,7 +298,7 @@ def create_vlm_agent():
     vlm_tools = [AnalyzeImageTool()]
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are a visual analysis expert. Your job is to analyze images and answer questions based on their content. When asked to analyze an image, always use the analyze_image tool with the image path 'image.jpeg'."),
+        ("system", "You are a visual analysis expert. Your job is to analyze live video frames and answer questions based on their content. When asked to analyze the video stream, always use the analyze_image tool to capture and analyze the current frame from the RTSP stream."),
         MessagesPlaceholder(variable_name="messages"),
     ])
     

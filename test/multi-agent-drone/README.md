@@ -79,18 +79,31 @@ python main.py
 - **Context-Driven Actions**: Vision analysis triggers specific pilot behaviors
 - **Single Request Optimization**: Each vision query makes only one VLM request
 
-### Image Analysis
+## Configuration
 
-- Place your test image as `image.jpeg` in the `app/` directory
-- The system will analyze this image when vision commands are issued
+### Environment Variables
+Create a `.env` file in the `app/` directory:
+```
+OLLAMA_BASE_URL=http://<ollama_machine_ip>:11434
+OLLAMA_MODEL=llama3.1:8b
+OLLAMA_VLM_MODEL=llama3.2-vision:11b
+RTSP_URL=rtsp://192.168.64.1:8554/live
+```
+
+### Live Video Stream Analysis
+- The system now uses live RTSP video streams instead of static images
+- Configure the `RTSP_URL` environment variable to point to your video stream
+- The system will capture real-time frames from the stream for analysis
+
 
 ## Current Capabilities
 
-- Real-time image analysis with VLM
-- Context-driven drone landing
-- Shared drone connection management
-- Single VLM request per analysis
-- Clean response formatting
+- **Live Video Stream Analysis**: Real-time frame capture from RTSP streams
+- **Context-driven drone actions**: Vision analysis triggers specific pilot behaviors
+- **Shared drone connection management**: Both agents use the same connected drone instance
+- **Single VLM request per analysis**: Optimized for performance
+- **Smart object detection**: Supports multiple object types with related term matching
+- **Flexible action execution**: Supports takeoff, landing, and other drone actions
 
 ## Example Output
 
