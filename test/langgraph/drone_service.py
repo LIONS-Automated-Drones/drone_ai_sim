@@ -1,28 +1,52 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
 from utils import calculate_distance
+from mission_log import mission_log
+
+# Load environment variables from .env file
+load_dotenv()
 
 class DroneService:
     """A wrapper class for MAVSDK to simplify drone control."""
     def __init__(self):
         self.drone = System()
         self.is_connected = False
+        
+        # Load connection settings from environment variables
+        self.virtual = os.getenv('VIRTUAL', 'true').lower() == 'true'
+        self.serial_port = os.getenv('SERIAL_PORT', '/dev/tty.usbserial-0001')
+        self.baud_rate = int(os.getenv('BAUD_RATE', '57600'))
+        self.udp_address = os.getenv('UDP_ADDRESS', 'udp://:14540')
 
     async def connect(self):
         """
-        Connects to the simulated drone.
+        Connects to the drone - either virtual (Gazebo UDP) or physical (Serial SiK radio).
         """
         if self.is_connected:
             return True
+        
+        if self.virtual:
+            mission_log("--- Connecting to virtual drone (Gazebo)...")
+            connection_string = self.udp_address
+        else:
+            mission_log(f"--- Connecting to physical drone via SiK radio...")
+            mission_log(f"--- Serial port: {self.serial_port}, Baud rate: {self.baud_rate}")
+            connection_string = f"serial://{self.serial_port}:{self.baud_rate}"
             
-        print("--- Connecting to drone...")
-        await self.drone.connect(system_address="udp://:14540")
+        mission_log(f"--- Connection string: {connection_string}")
+        await self.drone.connect(system_address=connection_string)
 
         async for state in self.drone.core.connection_state():
             if state.is_connected:
-                print("--- Drone connected!")
+                mission_log("--- Drone connected!")
                 self.is_connected = True
+                async for health in self.drone.telemetry.health():
+                    mission_log("--- Health status ---")
+                    mission_log(health)
+                    break
                 return True
         return False
 
@@ -31,9 +55,9 @@ class DroneService:
         Arms the drone.
         """
         if not self.is_connected:
-            print("--- Drone not connected. Cannot arm.")
+            mission_log("--- Drone not connected. Cannot arm.")
             return False
-        print("--- Arming drone...")
+        mission_log("--- Arming drone...")
         await self.drone.action.arm()
         return True
 
@@ -42,18 +66,25 @@ class DroneService:
         Takes off to a default altitude.
         """
         if not self.is_connected:
-            print("--- Drone not connected. Cannot take off.")
+            mission_log("--- Drone not connected. Cannot take off.")
             return False
-        print("--- Taking off...")
+        mission_log("--- Taking off...")
         takeoff_altitude = await self.drone.action.get_takeoff_altitude()
-        print(f"--- Takeoff altitude: {takeoff_altitude}m")
+        current_altitude =  await anext(self.drone.telemetry.position())
+        current_altitude = current_altitude.absolute_altitude_m
+        target_altitude = current_altitude + takeoff_altitude
+        mission_log(f"--- Current altitude: {current_altitude}m, Target altitude: {target_altitude}m")
         await self.drone.action.takeoff()
+        i = 0
         while True:
             position = await anext(self.drone.telemetry.position())
-            if abs(position.absolute_altitude_m - takeoff_altitude) < 0.25:
-                print("--- Drone has reached takeoff altitude.")
+            if abs(position.absolute_altitude_m - target_altitude) < 0.25:
+                mission_log("--- Drone has reached takeoff altitude.")
                 break
             await asyncio.sleep(1)
+            if i % 10 == 0:
+                mission_log(f"--- Drone has not reached takeoff altitude. Current altitude: {position.absolute_altitude_m}m, target altitude: {target_altitude}m")
+            i += 1
         return True
 
     async def land(self):
@@ -61,13 +92,13 @@ class DroneService:
         Lands the drone.
         """
         if not self.is_connected:
-            print("--- Drone not connected. Cannot land.")
+            mission_log("--- Drone not connected. Cannot land.")
             return False
-        print("--- Landing...")
+        mission_log("--- Landing...")
         await self.drone.action.land()
         async for in_air in self.drone.telemetry.in_air():
             if not in_air:
-                print("--- Drone has landed.")
+                mission_log("--- Drone has landed.")
                 break
         return True
 
@@ -81,9 +112,9 @@ class DroneService:
             yaw_deg (float): Target yaw angle in degrees.
         """
         if not self.is_connected:
-            print("--- Drone not connected. Cannot go to location.")
+            mission_log("--- Drone not connected. Cannot go to location.")
             return False
-        print(f"--- Flying to {latitude_deg}, {longitude_deg} at {altitude_m}m...")
+        mission_log(f"--- Flying to {latitude_deg}, {longitude_deg} at {altitude_m}m...")
         await self.drone.action.goto_location(latitude_deg, longitude_deg, altitude_m, yaw_deg)
         
         while True:
@@ -95,7 +126,7 @@ class DroneService:
                 longitude_deg
             )
             if distance < 1:  # 1-meter tolerance
-                print("--- Arrived at target location.")
+                mission_log("--- Arrived at target location.")
                 break
             await asyncio.sleep(1)
             
@@ -106,13 +137,13 @@ class DroneService:
         Commands the drone to fly in a circle around its current position.
         """
         if not self.is_connected:
-            print("--- Drone note connected. Cannot orbit.")
+            mission_log("--- Drone note connected. Cannot orbit.")
             return False
         
         position = await anext(self.drone.telemetry.position())
         altitude = position.absolute_altitude_m
 
-        print(f"--- Orbiting at current location with radius {radius_m}m...")
+        mission_log(f"--- Orbiting at current location with radius {radius_m}m...")
         await self.drone.action.do_orbit(
             radius_m=radius_m,
             velocity_ms=velocity_ms,
@@ -129,13 +160,13 @@ class DroneService:
         Commands the drone to return to its takeoff location and land.
         """
         if not self.is_connected:
-            print("--- Drone not connected. Cannot return to launch.")
+            mission_log("--- Drone not connected. Cannot return to launch.")
             return False
-        print("--- Returning to launch location...")
+        mission_log("--- Returning to launch location...")
         await self.drone.action.return_to_launch()
         async for in_air in self.drone.telemetry.in_air():
             if not in_air:
-                print("--- Drone has landed at launch point.")
+                mission_log("--- Drone has landed at launch point.")
                 break
         return True
     
@@ -146,7 +177,7 @@ class DroneService:
             A dictionary with telemetry data or None if not available.
         """
         if not self.is_connected:
-            print("--- Drone not connected. Cannot get telemetry.")
+            mission_log("--- Drone not connected. Cannot get telemetry.")
             return None
             
         try:
@@ -165,7 +196,7 @@ class DroneService:
             }
             return telemetry_data
         except Exception as e:
-            print(f"--- Error getting telemetry: {e}")
+            mission_log(f"--- Error getting telemetry: {e}")
             return None
 
 # Helper to fix a common issue with anext in some environments
