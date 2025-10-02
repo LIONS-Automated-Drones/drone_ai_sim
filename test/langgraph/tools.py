@@ -136,6 +136,19 @@ class TelemetryTool(BaseTool):
         data = await drone_service.get_telemetry()
         return str(data) if data else "Could not retrieve telemetry."
 
+class RotateTool(BaseTool):
+    name: str = "rotate"
+    description: str = "Rotates the drone by a specified number of degrees (0-360) in the given direction ('cw' for clockwise, 'ccw' for counterclockwise)."
+
+    def _run(self, degrees: float, direction: str, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, degrees: float, direction: str, *args, **kwargs) -> str:
+        """Rotates the drone."""
+        print(f"--- EXECUTING TOOL: Rotating {degrees}° {direction.upper()}... ---")
+        success = await drone_service.rotate(degrees, direction)
+        return f"Successfully rotated {degrees}° {direction.upper()}." if success else f"Failed to rotate {degrees}° {direction.upper()}."
+
 class MissionCompleteTool(BaseTool):
     name: str = "mission_complete"
     description: str = "Call this tool when the entire mission is successfully completed. Provide a final summary of the mission as an argument."
@@ -148,7 +161,7 @@ class MissionCompleteTool(BaseTool):
         """Marks the mission as complete."""
         return f"Mission complete: {summary}"
     
-tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool(), MissionCompleteTool()]
+tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool(), RotateTool(), MissionCompleteTool()]
 
 def get_tools():
     return tools

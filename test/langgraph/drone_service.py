@@ -170,6 +170,57 @@ class DroneService:
                 break
         return True
     
+    async def rotate(self, degrees: float, direction: str):
+        """
+        Rotates the drone by a specified number of degrees in the given direction.
+        Args:
+            degrees (float): Number of degrees to rotate (0-360).
+            direction (str): Direction to rotate - 'cw' for clockwise, 'ccw' for counterclockwise.
+        """
+        if not self.is_connected:
+            mission_log("--- Drone not connected. Cannot rotate.")
+            return False
+        
+        # Validate inputs
+        if not 0 <= degrees <= 360:
+            mission_log(f"--- Invalid rotation angle: {degrees}. Must be between 0 and 360 degrees.")
+            return False
+        
+        if direction not in ['cw', 'ccw']:
+            mission_log(f"--- Invalid direction: {direction}. Must be 'cw' or 'ccw'.")
+            return False
+        
+        # Get current telemetry
+        telemetry = await self.get_telemetry()
+        if not telemetry:
+            mission_log("--- Failed to get current telemetry. Cannot rotate.")
+            return False
+        
+        current_heading = telemetry["heading_deg"]
+        
+        # Calculate new heading
+        if direction == 'cw':
+            new_heading = (current_heading + degrees) % 360
+        else:  # ccw
+            new_heading = (current_heading - degrees) % 360
+        
+        mission_log(f"--- Rotating {degrees}° {direction.upper()} from {current_heading:.1f}° to {new_heading:.1f}°...")
+        
+        # Rotate in place by going to current position with new heading
+        success = await self.goto_location(
+            telemetry["latitude_deg"],
+            telemetry["longitude_deg"],
+            telemetry["absolute_altitude_m"],
+            new_heading
+        )
+        
+        if success:
+            mission_log(f"--- Rotation complete. New heading: {new_heading:.1f}°")
+        else:
+            mission_log("--- Rotation failed.")
+        
+        return success
+    
     async def get_telemetry(self):
         """
         Gets the current telemetry data from the drone.
