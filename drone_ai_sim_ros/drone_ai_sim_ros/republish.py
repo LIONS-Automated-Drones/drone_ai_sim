@@ -38,8 +38,8 @@ class CameraInfoRepublisher(Node):
 
         # Load calibration
         try:
-            self.left_info = load_camera_info(left_yaml, "stereo_left_link")
-            self.right_info = load_camera_info(right_yaml, "stereo_right_link")
+            self.left_info = load_camera_info(left_yaml, "stereo_left_optical_frame")
+            self.right_info = load_camera_info(right_yaml, "stereo_right_optical_frame")
         except FileNotFoundError as e:
             self.get_logger().error(str(e))
             rclpy.shutdown()
@@ -57,11 +57,11 @@ class CameraInfoRepublisher(Node):
         self.create_subscription(Image, '/stereo/left', self.left_callback, 10)
         self.create_subscription(Image, '/stereo/right', self.right_callback, 10)
 
-        self.get_logger().info("Stereo CameraInfo Republisher started.")
+        self.get_logger().info("Stereo CameraInfo Republisher started. optical frames")
 
     def left_callback(self, msg: Image):
         # Fix frame_id for image
-        msg.header.frame_id = "stereo_left_link"
+        msg.header.frame_id = "stereo_left_optical_frame"
         self.left_img_pub.publish(msg)
 
         # Sync camera_info timestamp and publish
@@ -69,11 +69,12 @@ class CameraInfoRepublisher(Node):
         self.left_info_pub.publish(self.left_info)
 
     def right_callback(self, msg: Image):
-        msg.header.frame_id = "stereo_right_link"
+        msg.header.frame_id = "stereo_right_optical_frame"
         self.right_img_pub.publish(msg)
 
         self.right_info.header.stamp = msg.header.stamp
         self.right_info_pub.publish(self.right_info)
+
 
 
 def main(args=None):
