@@ -48,6 +48,20 @@ def generate_launch_description():
             arguments=["0", "0", "0", "0", "0", "0", "stereo_right_link", "x500_0/stereo_right_link/stereo_right"],
         ),
 
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="stereo_left_optical_tf",
+            arguments=["0", "0", "0", "-1.5708", "0", "-1.5708", "stereo_left_link", "stereo_left_optical_frame"],
+        ),
+
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="stereo_right_optical_tf",
+            arguments=["0", "0", "0", "-1.5708", "0", "-1.5708", "stereo_right_link", "stereo_right_optical_frame"],
+        ),
+
         # Republisher
         Node(
             package="drone_ai_sim_ros",
@@ -120,6 +134,8 @@ def generate_launch_description():
             parameters=[{
                 "approx_sync": True,
                 "queue_size": 20,
+                # Tell it to publish in left optical frame
+                "frame_id": "stereo_left_optical_frame"
             }],
         ),
         # RTAB-Map SLAM
@@ -137,6 +153,9 @@ def generate_launch_description():
                 "publish_tf": True,
                 "publish_odom_tf": False,
                 "publish_trajectory": True,
+                # These two tell RTAB-Map which TF frames belong to the cameras
+                "stereo_optical_frame_id": "stereo_left_optical_frame",
+                "stereo_optical_frame_id_right": "stereo_right_optical_frame",
             }],
             remappings=[
                 ("odom", "/odom"),

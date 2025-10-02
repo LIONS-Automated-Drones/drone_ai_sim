@@ -28,6 +28,7 @@ source install/setup.bash
 #### Running the project
 ```bash
 # Terminal 1
+cd ~/sd1_ws/PX4-Autopilot/
 PX4_GZ_WORLD=depot HEADLESS=1 make px4_sitl gz_x500
 # Terminal 2 
 ros2 launch drone_ai_sim_ros orchestrate.launch.py
