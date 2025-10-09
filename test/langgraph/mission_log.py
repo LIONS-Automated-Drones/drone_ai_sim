@@ -14,10 +14,17 @@ class MissionLogger:
     def __init__(self):
         self.use_react = os.getenv("USE_REACT", "false").lower() == "true"
         self.websocket_send_callback: Optional[Callable[[str], Awaitable[None]]] = None
+        self.telemetry_callback: Optional[Callable[[str], Awaitable[None]]] = None
     
     def set_websocket_callback(self, callback: Callable[[str], Awaitable[None]]):
         """Set the WebSocket send callback for React mode."""
         self.websocket_send_callback = callback
+        # Use the same callback for telemetry for now
+        self.telemetry_callback = callback
+    
+    def set_telemetry_callback(self, callback: Callable[[str], Awaitable[None]]):
+        """Set the telemetry send callback for React mode."""
+        self.telemetry_callback = callback
     
     async def _async_log(self, message: str, log_type: str = "INFO"):
         """
@@ -97,6 +104,28 @@ def set_websocket_callback(callback: Callable[[str], Awaitable[None]]):
         callback: Async function that takes a string message and sends it via WebSocket
     """
     _logger.set_websocket_callback(callback)
+
+def set_telemetry_callback(callback: Callable[[str], Awaitable[None]]):
+    """
+    Set the telemetry send callback for the global logger.
+    
+    Args:
+        callback: Async function that takes a string telemetry data and sends it via WebSocket
+    """
+    _logger.set_telemetry_callback(callback)
+
+async def send_telemetry(telemetry_json: str):
+    """
+    Send telemetry data via WebSocket (async).
+    
+    Args:
+        telemetry_json (str): JSON string containing telemetry data
+    """
+    if _logger.use_react and _logger.telemetry_callback:
+        try:
+            await _logger.telemetry_callback(telemetry_json)
+        except Exception as e:
+            print(f"[ERROR] Failed to send telemetry to WebSocket: {e}")
 
 def is_react_mode() -> bool:
     """

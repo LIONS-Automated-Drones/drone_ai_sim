@@ -1,10 +1,12 @@
 import asyncio
 import os
+import json
+import time
 from dotenv import load_dotenv
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
 from utils import calculate_distance
-from mission_log import mission_log
+from mission_log import mission_log, set_telemetry_callback, send_telemetry
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,6 +22,11 @@ class DroneService:
         self.serial_port = os.getenv('SERIAL_PORT', '/dev/tty.usbserial-0001')
         self.baud_rate = int(os.getenv('BAUD_RATE', '57600'))
         self.udp_address = os.getenv('UDP_ADDRESS', 'udp://:14540')
+        
+        # Telemetry streaming
+        self.telemetry_streaming = False
+        self.telemetry_task = None
+        self.takeoff_position = None  # Store initial position for relative calculations
 
     async def connect(self):
         """
@@ -68,12 +75,25 @@ class DroneService:
         if not self.is_connected:
             mission_log("--- Drone not connected. Cannot take off.")
             return False
+        
+        # Store takeoff position for relative calculations
+        position = await anext(self.drone.telemetry.position())
+        self.takeoff_position = {
+            "latitude_deg": position.latitude_deg,
+            "longitude_deg": position.longitude_deg,
+            "absolute_altitude_m": position.absolute_altitude_m
+        }
+        mission_log(f"--- Stored takeoff position: {self.takeoff_position}")
+        
         mission_log("--- Taking off...")
         takeoff_altitude = await self.drone.action.get_takeoff_altitude()
-        current_altitude =  await anext(self.drone.telemetry.position())
-        current_altitude = current_altitude.absolute_altitude_m
+        current_altitude = position.absolute_altitude_m
         target_altitude = current_altitude + takeoff_altitude
         mission_log(f"--- Current altitude: {current_altitude}m, Target altitude: {target_altitude}m")
+        
+        # Start telemetry streaming after storing takeoff position
+        await self.start_telemetry_streaming()
+        
         await self.drone.action.takeoff()
         i = 0
         while True:
@@ -99,6 +119,8 @@ class DroneService:
         async for in_air in self.drone.telemetry.in_air():
             if not in_air:
                 mission_log("--- Drone has landed.")
+                # Stop telemetry streaming when landed
+                await self.stop_telemetry_streaming()
                 break
         return True
 
@@ -249,6 +271,122 @@ class DroneService:
         except Exception as e:
             mission_log(f"--- Error getting telemetry: {e}")
             return None
+
+    async def get_comprehensive_telemetry(self):
+        """
+        Gets comprehensive telemetry data for streaming to dashboard.
+        Returns:
+            A dictionary with all required telemetry data or None if not available.
+        """
+        if not self.is_connected:
+            return None
+            
+        try:
+            # Get all required telemetry data
+            position = await anext(self.drone.telemetry.position())
+            heading = await anext(self.drone.telemetry.heading())
+            is_in_air = await anext(self.drone.telemetry.in_air())
+            armed = await anext(self.drone.telemetry.armed())
+            battery = await anext(self.drone.telemetry.battery())
+            gps_info = await anext(self.drone.telemetry.gps_info())
+            health_all_ok = await anext(self.drone.telemetry.health_all_ok())
+            velocity_ned = await anext(self.drone.telemetry.velocity_ned())
+            
+            # Get flight mode
+            try:
+                flight_mode = await anext(self.drone.telemetry.flight_mode())
+                flight_mode_str = str(flight_mode).split('.')[-1]  # Extract enum name
+            except:
+                flight_mode_str = "UNKNOWN"
+            
+            # Calculate position relative to takeoff
+            relative_position = {"x_m": 0.0, "y_m": 0.0, "z_m": 0.0}
+            if self.takeoff_position:
+                # Calculate distance from takeoff position
+                distance_horizontal = calculate_distance(
+                    self.takeoff_position["latitude_deg"],
+                    self.takeoff_position["longitude_deg"],
+                    position.latitude_deg,
+                    position.longitude_deg
+                )
+                
+                # Calculate bearing to determine x,y components
+                import math
+                lat1_rad = math.radians(self.takeoff_position["latitude_deg"])
+                lat2_rad = math.radians(position.latitude_deg)
+                dlon_rad = math.radians(position.longitude_deg - self.takeoff_position["longitude_deg"])
+                
+                y = math.sin(dlon_rad) * math.cos(lat2_rad)
+                x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon_rad)
+                
+                bearing_rad = math.atan2(y, x)
+                
+                relative_position = {
+                    "x_m": distance_horizontal * math.cos(bearing_rad),  # North-South (positive = North)
+                    "y_m": distance_horizontal * math.sin(bearing_rad),  # East-West (positive = East)
+                    "z_m": position.absolute_altitude_m - self.takeoff_position["absolute_altitude_m"]  # Up-Down (positive = Up)
+                }
+            
+            # Calculate total velocity
+            velocity_total = math.sqrt(velocity_ned.north_m_s**2 + velocity_ned.east_m_s**2 + velocity_ned.down_m_s**2)
+            
+            telemetry_data = {
+                "type": "telemetry",
+                "timestamp": int(time.time() * 1000),  # milliseconds
+                "armed": armed,
+                "flight_mode": flight_mode_str,
+                "battery_percent": battery.remaining_percent,
+                "gps_fix_type": str(gps_info.fix_type).split('.')[-1],
+                "gps_satellites": gps_info.num_satellites,
+                "health_all_ok": health_all_ok,
+                "position_relative": relative_position,
+                "altitude_m": position.absolute_altitude_m,
+                "velocity_ms": velocity_total,
+                "heading_deg": heading.heading_deg,
+                "is_in_air": is_in_air
+            }
+            return telemetry_data
+        except Exception as e:
+            mission_log(f"--- Error getting comprehensive telemetry: {e}")
+            return None
+
+    async def start_telemetry_streaming(self):
+        """Start streaming telemetry data at 10Hz frequency."""
+        if self.telemetry_streaming:
+            return  # Already streaming
+        
+        self.telemetry_streaming = True
+        self.telemetry_task = asyncio.create_task(self._telemetry_stream_loop())
+        mission_log("--- Telemetry streaming started at 10Hz")
+
+    async def stop_telemetry_streaming(self):
+        """Stop streaming telemetry data."""
+        self.telemetry_streaming = False
+        if self.telemetry_task:
+            self.telemetry_task.cancel()
+            try:
+                await self.telemetry_task
+            except asyncio.CancelledError:
+                pass
+            self.telemetry_task = None
+        mission_log("--- Telemetry streaming stopped")
+
+    async def _telemetry_stream_loop(self):
+        """Internal loop for streaming telemetry data."""
+        try:
+            while self.telemetry_streaming and self.is_connected:
+                telemetry_data = await self.get_comprehensive_telemetry()
+                if telemetry_data:
+                    # Send telemetry via the callback (similar to mission_log)
+                    await send_telemetry(json.dumps(telemetry_data))
+                
+                # Wait for 0.5 seconds (2Hz frequency)
+                await asyncio.sleep(1/10)
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            mission_log(f"--- Error in telemetry streaming: {e}")
+            self.telemetry_streaming = False
 
 # Helper to fix a common issue with anext in some environments
 async def anext(ait):
