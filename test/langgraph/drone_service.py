@@ -2,14 +2,11 @@ import asyncio
 import os
 import json
 import time
-from dotenv import load_dotenv
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
 from utils import calculate_distance
 from mission_log import mission_log, set_telemetry_callback, send_telemetry
-
-# Load environment variables from .env file
-load_dotenv()
+from environment_settings import ENVIRONMENT_SETTINGS
 
 class DroneService:
     """A wrapper class for MAVSDK to simplify drone control."""
@@ -18,10 +15,13 @@ class DroneService:
         self.is_connected = False
         
         # Load connection settings from environment variables
-        self.virtual = os.getenv('VIRTUAL', 'true').lower() == 'true'
-        self.serial_port = os.getenv('SERIAL_PORT', '/dev/tty.usbserial-0001')
-        self.baud_rate = int(os.getenv('BAUD_RATE', '57600'))
-        self.udp_address = os.getenv('UDP_ADDRESS', 'udp://:14540')
+        self.virtual = ENVIRONMENT_SETTINGS.is_gazebo
+        if not self.virtual:
+            self.serial_port = ENVIRONMENT_SETTINGS.serial_port
+            self.baud_rate = ENVIRONMENT_SETTINGS.baud_rate
+            self.udp_address = ENVIRONMENT_SETTINGS.udp_address
+        else:
+            self.udp_address = ENVIRONMENT_SETTINGS.udp_address
         
         # Telemetry streaming
         self.telemetry_streaming = False

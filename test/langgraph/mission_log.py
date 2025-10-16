@@ -2,9 +2,7 @@ import os
 import asyncio
 from typing import Optional, Callable, Awaitable
 from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+from environment_settings import ENVIRONMENT_SETTINGS
 
 class MissionLogger:
     """
@@ -12,7 +10,6 @@ class MissionLogger:
     """
     
     def __init__(self):
-        self.use_react = os.getenv("USE_REACT", "false").lower() == "true"
         self.websocket_send_callback: Optional[Callable[[str], Awaitable[None]]] = None
         self.telemetry_callback: Optional[Callable[[str], Awaitable[None]]] = None
     
@@ -41,7 +38,7 @@ class MissionLogger:
         print(formatted_message)
         
         # If in React mode and WebSocket callback is available, also send to WebSocket
-        if self.use_react and self.websocket_send_callback:
+        if ENVIRONMENT_SETTINGS.use_react and self.websocket_send_callback:
             try:
                 await self.websocket_send_callback(formatted_message)
             except Exception as e:
@@ -62,7 +59,7 @@ class MissionLogger:
         print(formatted_message)
         
         # If in React mode and WebSocket callback is available, fire-and-forget the WebSocket send
-        if self.use_react and self.websocket_send_callback:
+        if ENVIRONMENT_SETTINGS.use_react and self.websocket_send_callback:
             try:
                 # Try to get the current event loop, if any
                 loop = asyncio.get_event_loop()
@@ -121,7 +118,7 @@ async def send_telemetry(telemetry_json: str):
     Args:
         telemetry_json (str): JSON string containing telemetry data
     """
-    if _logger.use_react and _logger.telemetry_callback:
+    if ENVIRONMENT_SETTINGS.use_react and _logger.telemetry_callback:
         try:
             await _logger.telemetry_callback(telemetry_json)
         except Exception as e:
@@ -134,4 +131,4 @@ def is_react_mode() -> bool:
     Returns:
         bool: True if in React mode, False if in CLI mode
     """
-    return _logger.use_react
+    return ENVIRONMENT_SETTINGS.use_react

@@ -10,23 +10,14 @@ from langchain_openai import ChatOpenAI
 from tools import get_tools
 from graph import build_graph
 from mission_log import set_websocket_callback, mission_log
-
-# Load environment variables from .env file
-load_dotenv()
-
-model = os.getenv("OPENROUTER_MODEL")
-base_url = os.getenv("OPENROUTER_BASE_URL")
-api_key = os.getenv("OPENROUTER_API_KEY")
-use_react = os.getenv("USE_REACT", "false").lower() == "true"
-print(f"Using model: {model}, base url: {base_url}, USE_REACT: {use_react}")
-
+from environment_settings import ENVIRONMENT_SETTINGS
 # --- 1. Setup the Agent ---
 tools = get_tools()
 tool_names = [tool.name for tool in tools]
 llm = ChatOpenAI(
-    model=model,
-    openai_api_base=base_url,
-    openai_api_key=api_key,
+    model=ENVIRONMENT_SETTINGS.openrouter_model,
+    openai_api_base=ENVIRONMENT_SETTINGS.openrouter_base_url,
+    openai_api_key=ENVIRONMENT_SETTINGS.openrouter_api_key,
     temperature=0,
 )
 
@@ -72,10 +63,8 @@ async def websocket_handler(websocket):
 
 async def run_websocket_server():
     """Starts the WebSocket server."""
-    server_address = "0.0.0.0"
-    server_port = 8000
-    async with websockets.serve(websocket_handler, server_address, server_port):
-        print(f"--- WebSocket server started at ws://{server_address}:{server_port} ---")
+    async with websockets.serve(websocket_handler, ENVIRONMENT_SETTINGS.server_address, ENVIRONMENT_SETTINGS.server_port):
+        print(f"--- WebSocket server started at ws://{ENVIRONMENT_SETTINGS.server_address}:{ENVIRONMENT_SETTINGS.server_port} ---")
         await asyncio.Future()  # Run forever
 
 async def run_cli():
@@ -96,7 +85,7 @@ async def run_cli():
         prompt_count += 1
 
 async def main():
-    if use_react:
+    if ENVIRONMENT_SETTINGS.use_react:
         await run_websocket_server()
     else:
         await run_cli()
