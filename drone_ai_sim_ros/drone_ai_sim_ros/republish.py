@@ -32,6 +32,11 @@ class CameraInfoRepublisher(Node):
     def __init__(self):
         super().__init__('stereo_camera_info_republisher')
 
+
+        self.declare_parameter('use_sim_time', True)
+        use_sim_time = self.get_parameter('use_sim_time').get_parameter_value().bool_value
+        if use_sim_time:
+            self.get_logger().info("Using simulated time (/clock)")
         # Paths to calibration files (place them in ~/.ros/camera_info/)
         left_yaml = str(Path.home() / '.ros/camera_info/stereo_left.yaml')
         right_yaml = str(Path.home() / '.ros/camera_info/stereo_right.yaml')

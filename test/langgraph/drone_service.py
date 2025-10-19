@@ -240,6 +240,17 @@ class DroneService:
             mission_log(f"--- Rotation complete. New heading: {new_heading:.1f}°")
         else:
             mission_log("--- Rotation failed.")
+            
+        i = 0
+        while True:
+            position = await anext(self.drone.telemetry.position())
+            if abs(position.heading_deg - new_heading) < 2:
+                mission_log("--- Drone has reached new heading.")
+                break
+            await asyncio.sleep(1)
+            if i % 10 == 0:
+                mission_log(f"--- Drone has not reached new heading. Current heading: {position.heading_deg:.1f}°, new heading: {new_heading:.1f}°")
+            i += 1
         
         return success
     
