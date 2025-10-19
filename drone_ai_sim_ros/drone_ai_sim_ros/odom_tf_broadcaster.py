@@ -8,12 +8,6 @@ class OdomTFPublisher(Node):
     def __init__(self):
         super().__init__('odom_tf_broadcaster')
 
-        # ✅ Declare and respect use_sim_time param
-        self.declare_parameter('use_sim_time', True)
-        use_sim_time = self.get_parameter('use_sim_time').get_parameter_value().bool_value
-        if use_sim_time:
-            self.get_logger().info("Using simulated time (/clock)")
-
         # TF broadcaster automatically respects the node's clock
         self.tf_broadcaster = TransformBroadcaster(self)
 
