@@ -20,7 +20,7 @@ def load_camera_info(yaml_path: str, frame_id: str, logger) -> CameraInfo:
         calib = yaml.safe_load(f)
 
     def flatten(data) -> List[float]:
-        # Some YAML parsers can return nested lists; flatten them safely
+        # Some YAML parsers return nested lists; flatten them safely
         if isinstance(data, list):
             return [float(x) for sub in data for x in (sub if isinstance(sub, list) else [sub])]
         return [float(x) for x in data.values()] if isinstance(data, dict) else [float(data)]
@@ -72,10 +72,9 @@ class CameraInfoRepublisher(Node):
         self.create_subscription(Image, '/stereo/left', self.left_callback, 10)
         self.create_subscription(Image, '/stereo/right', self.right_callback, 10)
 
-        self.frame_count = 0
         self.get_logger().info("✅ Stereo CameraInfo Republisher initialized and running")
 
-        # Extra sanity check: warn if no baseline
+        # Warn if no baseline
         if abs(self.right_info.p[3]) < 1e-3:
             self.get_logger().warn("⚠️ Right camera P[3] is zero — stereo baseline not applied!")
 
@@ -86,19 +85,12 @@ class CameraInfoRepublisher(Node):
         self.left_info.header.stamp = msg.header.stamp
         self.left_info_pub.publish(self.left_info)
 
-        self.frame_count += 1
-        if self.frame_count % 60 == 0:  # every ~2 seconds at 30Hz
-            self.get_logger().info_throttle(5.0, f"Publishing left frame {self.frame_count}")
-
     def right_callback(self, msg: Image):
         msg.header.frame_id = "stereo_right_optical_frame"
         self.right_img_pub.publish(msg)
 
         self.right_info.header.stamp = msg.header.stamp
         self.right_info_pub.publish(self.right_info)
-
-        if self.frame_count % 60 == 0:
-            self.get_logger().info_throttle(5.0, f"Publishing right frame {self.frame_count}")
 
 
 def main(args=None):
