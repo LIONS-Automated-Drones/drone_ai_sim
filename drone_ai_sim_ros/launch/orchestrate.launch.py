@@ -13,19 +13,9 @@ def generate_launch_description():
                 "/stereo/left@sensor_msgs/msg/Image@gz.msgs.Image",
                 "/stereo/right@sensor_msgs/msg/Image@gz.msgs.Image",
                 "/stereo/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
-                "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
                 "/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU",
                 "/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock"
             ],
-        ),
-        Node(
-            package="drone_ai_sim_ros",
-            executable="odom_tf_broadcaster",
-            name="odom_tf_broadcaster",
-            output="screen",
-            parameters=[{
-                "use_sim_time": True
-            }]
         ),
         # Static TFs
         # Node(
@@ -174,7 +164,8 @@ def generate_launch_description():
                 "Vis/UseIMU": True,
                 "Vis/IMUGravity": True,
                 "queue_size": 30,
-                "use_sim_time": True
+                "use_sim_time": True,
+                "publish_tf": True
             }],
             remappings=[
                 ("left/image_rect", "/stereo/left/image_rect"),
