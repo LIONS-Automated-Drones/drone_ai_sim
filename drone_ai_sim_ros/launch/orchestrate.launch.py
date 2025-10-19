@@ -14,6 +14,7 @@ def generate_launch_description():
                 "/stereo/right@sensor_msgs/msg/Image@gz.msgs.Image",
                 "/stereo/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
                 "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
+                "/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU"
             ],
         ),
         Node(
@@ -46,6 +47,12 @@ def generate_launch_description():
             executable="static_transform_publisher",
             name="rightlink_to_sim_right",
             arguments=["0", "0", "0", "0", "0", "0", "stereo_right_link", "x500_0/stereo_right_link/stereo_right"],
+        ),
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="baselink_to_imu",
+            arguments=["0", "0", "0", "0", "0", "0", "base_link", "x500_0/imu_link/imu_sensor"],
         ),
 
         Node(
@@ -149,6 +156,10 @@ def generate_launch_description():
                 "subscribe_stereo": True,
                 "approx_sync": True,
                 "subscribe_odom": True,
+                "subscribe_imu": True,                   # ✅ enable IMU
+                "Vis/UseIMU": True,                      # ✅ use IMU in VO
+                "Vis/IMUGravity": True,                  # ✅ align map with gravity
+                "Optimizer/GravitySigma": 0.1,           # ✅ constrain vertical drift
                 "delete_db_on_start": True,
                 "publish_tf": True,
                 "publish_odom_tf": False,
@@ -159,6 +170,7 @@ def generate_launch_description():
             }],
             remappings=[
                 ("odom", "/odom"),
+                ("imu", "/imu/data"),    
                 ("left/image_rect", "/stereo/left/image_rect"),
                 ("right/image_rect", "/stereo/right/image_rect"),
                 ("left/camera_info", "/stereo/left/camera_info"),
