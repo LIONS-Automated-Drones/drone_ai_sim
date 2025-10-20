@@ -178,6 +178,7 @@ def generate_launch_description():
                 "frame_id": "base_link",
                 "odom_frame_id": "odom_stereo",
                 "approx_sync": True,
+                "approx_sync_max_interval": 0.01,
                 "subscribe_imu": True,
                 "Vis/UseIMU": True,
                 "Vis/IMUGravity": True,
