@@ -17,6 +17,8 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import Path
 
 
 class PointCloudWebSocketBridge(Node):
@@ -35,6 +37,8 @@ class PointCloudWebSocketBridge(Node):
         self.host = self.get_parameter('host').get_parameter_value().string_value
 
         self.latest_pointcloud_data: Optional[Dict[str, Any]] = None
+        self.latest_pose_data: Optional[Dict[str, Any]] = None
+        self.latest_path_data: Optional[Dict[str, Any]] = None
         self.connected_clients: set = set()
         self.data_lock = asyncio.Lock()
 
@@ -46,10 +50,28 @@ class PointCloudWebSocketBridge(Node):
             10
         )
 
+        # Subscribe to localization pose
+        self.pose_subscription = self.create_subscription(
+            PoseWithCovarianceStamped,
+            '/localization_pose',
+            self.pose_callback,
+            10
+        )
+
+        # Subscribe to path
+        self.path_subscription = self.create_subscription(
+            Path,
+            '/mapPath',
+            self.path_callback,
+            10
+        )
+
         self.get_logger().info("✅ PointCloudWebSocketBridge node initialized.")
         self.get_logger().info(f"🛰️  Subscribed to topic: {self.topic_name}")
+        self.get_logger().info(f"📍 Subscribed to pose: /localization_pose")
+        self.get_logger().info(f"🛤️  Subscribed to path: /mapPath")
         self.get_logger().info(f"🌐 WebSocket configured for ws://{self.host}:{self.port}")
-        self.get_logger().info("⏳ Waiting for PointCloud2 messages...")
+        self.get_logger().info("⏳ Waiting for messages...")
 
     def pointcloud_callback(self, msg: PointCloud2):
         """Callback for PointCloud2 messages. Converts to Three.js format."""
@@ -89,17 +111,102 @@ class PointCloudWebSocketBridge(Node):
         except Exception as e:
             self.get_logger().error(f'💥 Error processing point cloud: {str(e)}')
 
+    def pose_callback(self, msg: PoseWithCovarianceStamped):
+        """Callback for localization pose messages."""
+        try:
+            # Extract position
+            position = {
+                'x': float(msg.pose.pose.position.x),
+                'y': float(msg.pose.pose.position.y),
+                'z': float(msg.pose.pose.position.z)
+            }
+
+            # Extract orientation (quaternion)
+            orientation = {
+                'x': float(msg.pose.pose.orientation.x),
+                'y': float(msg.pose.pose.orientation.y),
+                'z': float(msg.pose.pose.orientation.z),
+                'w': float(msg.pose.pose.orientation.w)
+            }
+
+            # Extract covariance (6x6 matrix, we'll use the first 3 diagonal elements for position uncertainty)
+            covariance = list(msg.pose.covariance)
+            
+            pose_data = {
+                'position': position,
+                'orientation': orientation,
+                'covariance': covariance,
+                'timestamp': self.get_clock().now().nanoseconds / 1e9,
+                'frame_id': msg.header.frame_id
+            }
+
+            asyncio.create_task(self.update_pose_data(pose_data))
+            self.get_logger().debug(f'📍 Updated pose: ({position["x"]:.2f}, {position["y"]:.2f}, {position["z"]:.2f})')
+
+        except Exception as e:
+            self.get_logger().error(f'💥 Error processing pose: {str(e)}')
+
+    def path_callback(self, msg: Path):
+        """Callback for path messages."""
+        try:
+            # Extract all poses in the path
+            poses = []
+            for pose_stamped in msg.poses:
+                poses.append({
+                    'position': {
+                        'x': float(pose_stamped.pose.position.x),
+                        'y': float(pose_stamped.pose.position.y),
+                        'z': float(pose_stamped.pose.position.z)
+                    },
+                    'orientation': {
+                        'x': float(pose_stamped.pose.orientation.x),
+                        'y': float(pose_stamped.pose.orientation.y),
+                        'z': float(pose_stamped.pose.orientation.z),
+                        'w': float(pose_stamped.pose.orientation.w)
+                    }
+                })
+
+            path_data = {
+                'poses': poses,
+                'timestamp': self.get_clock().now().nanoseconds / 1e9,
+                'frame_id': msg.header.frame_id,
+                'num_poses': len(poses)
+            }
+
+            asyncio.create_task(self.update_path_data(path_data))
+            self.get_logger().debug(f'🛤️  Updated path with {len(poses)} poses')
+
+        except Exception as e:
+            self.get_logger().error(f'💥 Error processing path: {str(e)}')
+
     async def update_pointcloud_data(self, data: Dict[str, Any]):
         async with self.data_lock:
             self.latest_pointcloud_data = data
-            await self.broadcast_to_clients(data)
+            await self.broadcast_to_clients()
 
-    async def broadcast_to_clients(self, data: Dict[str, Any]):
+    async def update_pose_data(self, data: Dict[str, Any]):
+        async with self.data_lock:
+            self.latest_pose_data = data
+            await self.broadcast_to_clients()
+
+    async def update_path_data(self, data: Dict[str, Any]):
+        async with self.data_lock:
+            self.latest_path_data = data
+            await self.broadcast_to_clients()
+
+    async def broadcast_to_clients(self):
         if not self.connected_clients:
             self.get_logger().debug("No connected WebSocket clients to broadcast to.")
             return
 
-        json_data = json.dumps(data)
+        # Combine all data into a single message
+        combined_data = {
+            'pointcloud': self.latest_pointcloud_data,
+            'pose': self.latest_pose_data,
+            'path': self.latest_path_data
+        }
+
+        json_data = json.dumps(combined_data)
         disconnected = set()
 
         for client in self.connected_clients:
@@ -113,7 +220,7 @@ class PointCloudWebSocketBridge(Node):
                 disconnected.add(client)
 
         self.connected_clients -= disconnected
-        self.get_logger().info(f'📤 Broadcasted point cloud to {len(self.connected_clients)} active clients.')
+        self.get_logger().debug(f'📤 Broadcasted data to {len(self.connected_clients)} active clients.')
 
     async def handle_client(self, websocket):
         """Handle WebSocket client connections."""
@@ -123,8 +230,13 @@ class PointCloudWebSocketBridge(Node):
 
         try:
             async with self.data_lock:
-                if self.latest_pointcloud_data:
-                    await websocket.send(json.dumps(self.latest_pointcloud_data))
+                # Send all available data to new client
+                combined_data = {
+                    'pointcloud': self.latest_pointcloud_data,
+                    'pose': self.latest_pose_data,
+                    'path': self.latest_path_data
+                }
+                await websocket.send(json.dumps(combined_data))
 
             async for message in websocket:
                 try:
@@ -133,8 +245,12 @@ class PointCloudWebSocketBridge(Node):
                         await websocket.send(json.dumps({'type': 'pong'}))
                     elif data.get('type') == 'request_data':
                         async with self.data_lock:
-                            if self.latest_pointcloud_data:
-                                await websocket.send(json.dumps(self.latest_pointcloud_data))
+                            combined_data = {
+                                'pointcloud': self.latest_pointcloud_data,
+                                'pose': self.latest_pose_data,
+                                'path': self.latest_path_data
+                            }
+                            await websocket.send(json.dumps(combined_data))
                 except json.JSONDecodeError:
                     self.get_logger().warning(f'Invalid JSON received: {message}')
         except websockets.exceptions.ConnectionClosed:
