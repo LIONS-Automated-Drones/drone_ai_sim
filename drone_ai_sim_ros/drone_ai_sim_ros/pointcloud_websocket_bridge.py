@@ -174,7 +174,8 @@ async def main_async():
         help='WebSocket server host (default: localhost)'
     )
     
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
     
     # Initialize ROS2
     rclpy.init()
