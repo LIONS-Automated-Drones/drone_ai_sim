@@ -1,34 +1,15 @@
 #!/usr/bin/env python3
 """
-ROS2 PointCloud2 to WebSocket Bridge
+ROS2 PointCloud2 to WebSocket Bridge (Verbose Debug Version)
 
-This node subscribes to a ROS2 PointCloud2 topic and publishes the data
-over a WebSocket in a format suitable for Three.js rendering.
-
-It supports both direct CLI execution and ROS2 launch parameter passing.
-
-Usage (CLI):
-    python pointcloud_websocket_bridge.py --topic /cloud_map --port 9000
-
-Usage (ROS2 launch):
-    Node(
-        package="drone_ai_sim_ros",
-        executable="pointcloud_websocket_bridge",
-        name="pointcloud_websocket_bridge",
-        output="screen",
-        parameters=[{
-            "use_sim_time": True,
-            "topic": "/cloud_map",
-            "port": 9000,
-            "host": "0.0.0.0"
-        }]
-    )
+Adds detailed logging to help debug network binding and connection issues.
 """
 
 import asyncio
 import json
 import struct
 import argparse
+import socket
 from typing import Optional, Dict, Any
 import websockets
 
@@ -44,7 +25,7 @@ class PointCloudWebSocketBridge(Node):
     def __init__(self):
         super().__init__('pointcloud_websocket_bridge')
 
-        # Declare parameters with defaults (can be overridden by ROS2 launch)
+        # Declare parameters
         self.declare_parameter('topic', '/stereo/points2')
         self.declare_parameter('port', 8765)
         self.declare_parameter('host', 'localhost')
@@ -65,9 +46,10 @@ class PointCloudWebSocketBridge(Node):
             10
         )
 
-        self.get_logger().info(f'Subscribed to topic: {self.topic_name}')
-        self.get_logger().info(f'WebSocket will serve on ws://{self.host}:{self.port}')
-        self.get_logger().info('Waiting for PointCloud2 messages...')
+        self.get_logger().info("✅ PointCloudWebSocketBridge node initialized.")
+        self.get_logger().info(f"🛰️  Subscribed to topic: {self.topic_name}")
+        self.get_logger().info(f"🌐 WebSocket configured for ws://{self.host}:{self.port}")
+        self.get_logger().info("⏳ Waiting for PointCloud2 messages...")
 
     def pointcloud_callback(self, msg: PointCloud2):
         """Callback for PointCloud2 messages. Converts to Three.js format."""
@@ -77,25 +59,20 @@ class PointCloudWebSocketBridge(Node):
 
             for point in point_cloud2.read_points(msg, field_names=['x', 'y', 'z', 'rgb'], skip_nans=True):
                 x, y, z, rgb = point
-
-                # Position (adjust coordinate system)
                 vertices.extend([float(x), float(z), float(-y)])
 
-                # Decode packed float RGB
                 rgb_bytes = struct.pack('f', rgb)
                 rgb_int = struct.unpack('I', rgb_bytes)[0]
                 r = ((rgb_int >> 16) & 0xFF) / 255.0
                 g = ((rgb_int >> 8) & 0xFF) / 255.0
                 b = (rgb_int & 0xFF) / 255.0
-
-                # Fallback gray if black
                 if r == 0 and g == 0 and b == 0:
                     r = g = b = 0.5
 
                 colors.extend([r, g, b])
 
             if not vertices:
-                self.get_logger().warning('Received empty point cloud')
+                self.get_logger().warning('⚠️ Received empty point cloud')
                 return
 
             pointcloud_data = {
@@ -107,20 +84,19 @@ class PointCloudWebSocketBridge(Node):
             }
 
             asyncio.create_task(self.update_pointcloud_data(pointcloud_data))
-            self.get_logger().info(f'Processed point cloud with {len(vertices) // 3} points')
+            self.get_logger().info(f'💾 Processed point cloud with {len(vertices) // 3} points')
 
         except Exception as e:
-            self.get_logger().error(f'Error processing point cloud: {str(e)}')
+            self.get_logger().error(f'💥 Error processing point cloud: {str(e)}')
 
     async def update_pointcloud_data(self, data: Dict[str, Any]):
-        """Safely update the latest point cloud and broadcast to clients."""
         async with self.data_lock:
             self.latest_pointcloud_data = data
             await self.broadcast_to_clients(data)
 
     async def broadcast_to_clients(self, data: Dict[str, Any]):
-        """Broadcast point cloud data to all connected WebSocket clients."""
         if not self.connected_clients:
+            self.get_logger().debug("No connected WebSocket clients to broadcast to.")
             return
 
         json_data = json.dumps(data)
@@ -130,24 +106,26 @@ class PointCloudWebSocketBridge(Node):
             try:
                 await client.send(json_data)
             except websockets.exceptions.ConnectionClosed:
+                self.get_logger().warning("Client disconnected unexpectedly.")
                 disconnected.add(client)
             except Exception as e:
                 self.get_logger().error(f'Error sending to client: {str(e)}')
                 disconnected.add(client)
 
         self.connected_clients -= disconnected
+        self.get_logger().info(f'📤 Broadcasted point cloud to {len(self.connected_clients)} active clients.')
 
     async def handle_client(self, websocket):
-        """Handle a WebSocket client connection."""
-        self.get_logger().info(f'Client connected: {websocket.remote_address}')
+        """Handle WebSocket client connections."""
+        self.get_logger().info(f'🔌 New client connected from {websocket.remote_address}')
         self.connected_clients.add(websocket)
+        self.get_logger().info(f'👥 Total connected clients: {len(self.connected_clients)}')
+
         try:
-            # Send latest data immediately
             async with self.data_lock:
                 if self.latest_pointcloud_data:
                     await websocket.send(json.dumps(self.latest_pointcloud_data))
 
-            # Keep connection alive
             async for message in websocket:
                 try:
                     data = json.loads(message)
@@ -158,44 +136,24 @@ class PointCloudWebSocketBridge(Node):
                             if self.latest_pointcloud_data:
                                 await websocket.send(json.dumps(self.latest_pointcloud_data))
                 except json.JSONDecodeError:
-                    self.get_logger().warning(f'Invalid JSON: {message}')
+                    self.get_logger().warning(f'Invalid JSON received: {message}')
         except websockets.exceptions.ConnectionClosed:
-            self.get_logger().info('Client disconnected')
+            self.get_logger().info('🔌 Client disconnected.')
         finally:
             self.connected_clients.discard(websocket)
+            self.get_logger().info(f'👥 Clients remaining: {len(self.connected_clients)}')
 
 
 async def main_async():
-    """Async entry point for ROS2 launch and CLI."""
-    # Parse optional CLI args (for direct execution)
-    parser = argparse.ArgumentParser(
-        description='Bridge ROS2 PointCloud2 topics to WebSocket'
-    )
-    parser.add_argument(
-        '--topic',
-        type=str,
-        default='/stereo/points2',
-        help='ROS2 PointCloud2 topic name (default: /stereo/points2)'
-    )
-    parser.add_argument(
-        '--port',
-        type=int,
-        default=8765,
-        help='WebSocket server port (default: 8765)'
-    )
-    parser.add_argument(
-        '--host',
-        type=str,
-        default='localhost',
-        help='WebSocket server host (default: localhost)'
-    )
-    
+    parser = argparse.ArgumentParser(description='ROS2 → WebSocket PointCloud bridge')
+    parser.add_argument('--topic', type=str, default='/stereo/points2')
+    parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--host', type=str, default='localhost')
     args, _ = parser.parse_known_args()
 
     rclpy.init()
     bridge = PointCloudWebSocketBridge()
 
-    # Override ROS parameters if provided via CLI
     if args.topic:
         bridge.topic_name = args.topic
     if args.port:
@@ -208,19 +166,30 @@ async def main_async():
             rclpy.spin_once(bridge, timeout_sec=0.01)
             await asyncio.sleep(0.01)
 
-    print(f"Starting WebSocket server on ws://{bridge.host}:{bridge.port}")
-    async with websockets.serve(bridge.handle_client, bridge.host, bridge.port):
-        try:
+    bridge.get_logger().info("🚀 Attempting to start WebSocket server...")
+
+    try:
+        async with websockets.serve(
+            bridge.handle_client,
+            bridge.host,
+            bridge.port,
+            family=socket.AF_INET
+        ):
+            bridge.get_logger().info(f"✅ WebSocket server started on ws://{bridge.host}:{bridge.port}")
             await spin_ros()
-        except KeyboardInterrupt:
-            print("\nShutting down...")
-        finally:
-            bridge.destroy_node()
-            rclpy.shutdown()
+    except Exception as e:
+        bridge.get_logger().error(f"💥 Failed to start WebSocket server: {e}")
+    finally:
+        bridge.get_logger().info("🛑 Shutting down bridge node...")
+        bridge.destroy_node()
+        rclpy.shutdown()
 
 
 def main():
-    asyncio.run(main_async())
+    try:
+        asyncio.run(main_async())
+    except Exception as e:
+        print(f"💥 Fatal error in main(): {e}")
 
 
 if __name__ == '__main__':
