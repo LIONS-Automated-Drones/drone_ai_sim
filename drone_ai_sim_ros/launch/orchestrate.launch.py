@@ -239,4 +239,15 @@ def generate_launch_description():
                 "port": 8080,
             }],
         ),
+        Node(
+            package="drone_ai_sim_ros",
+            executable="pointcloud_websocket_bridge",
+            name="pointcloud_websocket_bridge",
+            output="screen",
+            parameters=[{
+                "use_sim_time": True,
+                "topic": "/cloud_map",
+                "port": 9000
+            }]
+        ),
     ])
