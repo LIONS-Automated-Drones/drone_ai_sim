@@ -144,29 +144,26 @@ class PointCloudWebSocketBridge(Node):
             self.get_logger().info(f'👥 Clients remaining: {len(self.connected_clients)}')
 
 
-async def main_async():
-    parser = argparse.ArgumentParser(description='ROS2 → WebSocket PointCloud bridge')
-    parser.add_argument('--topic', type=str, default='/stereo/points2')
-    parser.add_argument('--port', type=int, default=8765)
-    parser.add_argument('--host', type=str, default='localhost')
-    args, _ = parser.parse_known_args()
-
+async def main_async(topic=None, port=None, host=None):
     rclpy.init()
     bridge = PointCloudWebSocketBridge()
 
-    if args.topic:
-        bridge.topic_name = args.topic
-    if args.port:
-        bridge.port = args.port
-    if args.host:
-        bridge.host = args.host
+    # Allow manual CLI overrides if provided
+    if topic:
+        bridge.topic_name = topic
+    if port:
+        bridge.port = port
+    if host:
+        bridge.host = host
+
+    bridge.get_logger().info(
+        f"⚙️  Final config: ws://{bridge.host}:{bridge.port} (topic={bridge.topic_name})"
+    )
 
     async def spin_ros():
         while rclpy.ok():
             rclpy.spin_once(bridge, timeout_sec=0.01)
             await asyncio.sleep(0.01)
-
-    bridge.get_logger().info("🚀 Attempting to start WebSocket server...")
 
     try:
         async with websockets.serve(
@@ -186,11 +183,15 @@ async def main_async():
 
 
 def main():
-    try:
-        asyncio.run(main_async())
-    except Exception as e:
-        print(f"💥 Fatal error in main(): {e}")
+    asyncio.run(main_async())
+
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Bridge ROS2 PointCloud2 topics to WebSocket')
+    parser.add_argument('--topic', type=str, default=None)
+    parser.add_argument('--port', type=int, default=None)
+    parser.add_argument('--host', type=str, default=None)
+    args = parser.parse_args()
+
+    asyncio.run(main_async(topic=args.topic, port=args.port, host=args.host))
