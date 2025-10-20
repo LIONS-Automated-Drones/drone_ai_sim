@@ -15,7 +15,10 @@ setup(
         # Install the launch files
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'websockets',
+    ],
     zip_safe=True,
     maintainer='connor',
     maintainer_email='you@example.com',
