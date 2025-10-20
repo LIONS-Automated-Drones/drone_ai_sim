@@ -150,7 +150,7 @@ class PointCloudWebSocketBridge(Node):
             self.connected_clients.discard(websocket)
 
 
-async def main():
+async def main_async():
     """Main entry point for the bridge."""
     parser = argparse.ArgumentParser(
         description='Bridge ROS2 PointCloud2 topics to WebSocket'
@@ -203,6 +203,8 @@ async def main():
             bridge.destroy_node()
             rclpy.shutdown()
 
+def main():
+    asyncio.run(main_async())
 
 if __name__ == '__main__':
     asyncio.run(main())
