@@ -163,7 +163,7 @@ collision_monitor:
     # At least one observation source is required
     observation_sources: ["pointcloud"]
     pointcloud:
-      type: PointCloud2
+      type: pointcloud
       topic: /points2    # or /cloud_obstacles if that’s your topic
       obstacle_keep_time: 0.5
       raytrace_range: 15.0
