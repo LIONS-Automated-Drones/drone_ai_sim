@@ -1,8 +1,7 @@
 amcl:
   ros__parameters:
     use_sim_time: true
-    # Disabled, but Nav2 still expects node names to exist if using default bringup
-    enabled: false
+    enabled: false  # Disabled, but Nav2 still expects node names to exist if using default bringup
 
 map_server:
   ros__parameters:
@@ -13,7 +12,8 @@ planner_server:
   ros__parameters:
     expected_planner_frequency: 5.0
     use_sim_time: true
-    planner_plugins: ["GridBased"]
+    planner_plugins:
+      - GridBased
     GridBased:
       plugin: "nav2_smac_planner::SmacPlanner2D"
       tolerance: 0.5
@@ -25,12 +25,12 @@ controller_server:
     use_sim_time: true
     controller_frequency: 10.0
 
-    # Which controller(s) to load
-    controller_plugins: ["FollowPath"]
+    controller_plugins:
+      - FollowPath
 
-    # Progress and goal checkers
     progress_checker_plugin: "progress_checker"
-    goal_checker_plugins: ["goal_checker"]
+    goal_checker_plugins:
+      - goal_checker
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
@@ -38,45 +38,35 @@ controller_server:
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
 
-    # Main DWB controller
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: false
 
-      # Velocity limits
       min_vel_x: 0.0
       max_vel_x: 0.5
       min_vel_theta: -1.0
       max_vel_theta: 1.0
-
-      # Acceleration limits
       acc_lim_x: 1.0
       acc_lim_theta: 2.0
-
-      # Sampling parameters
       vx_samples: 20
       vtheta_samples: 40
       sim_time: 2.0
 
-      # DWB critics (required!)
-      critics: [
-        "RotateToGoal",
-        "Oscillation",
-        "BaseObstacle",
-        "GoalAlign",
-        "PathAlign",
-        "PathDist",
-        "GoalDist"
-      ]
+      critics:
+        - RotateToGoal
+        - Oscillation
+        - BaseObstacle
+        - GoalAlign
+        - PathAlign
+        - PathDist
+        - GoalDist
 
-      # Critic weighting (tweak later as needed)
       BaseObstacle.scale: 0.02
       PathAlign.scale: 32.0
       GoalAlign.scale: 24.0
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
       RotateToGoal.scale: 32.0
-
 
 bt_navigator:
   ros__parameters:
@@ -102,22 +92,29 @@ global_costmap:
       resolution: 0.05
       track_unknown_space: true
       transform_tolerance: 0.3
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins:
+        - static_layer
+        - obstacle_layer
+        - inflation_layer
+
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: true
+
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        observation_sources: pointcloud
+        observation_sources:
+          - pointcloud
         pointcloud:
-          topic: /points2   # try /cloud_obstacles if needed
+          topic: /points2  # or /cloud_obstacles
           max_obstacle_height: 5.0
           min_obstacle_height: 0.05
           obstacle_range: 10.0
           raytrace_range: 15.0
-          clearing: True
-          marking: True
+          clearing: true
+          marking: true
           data_type: PointCloud2
+
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         inflation_radius: 0.5
@@ -134,19 +131,24 @@ local_costmap:
       rolling_window: true
       width: 10
       height: 10
-      plugins: ["obstacle_layer", "inflation_layer"]
+      plugins:
+        - obstacle_layer
+        - inflation_layer
+
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        observation_sources: pointcloud
+        observation_sources:
+          - pointcloud
         pointcloud:
-          topic: /points2   # or /cloud_obstacles
+          topic: /points2  # or /cloud_obstacles
           max_obstacle_height: 5.0
           min_obstacle_height: 0.05
           obstacle_range: 10.0
           raytrace_range: 15.0
-          clearing: True
-          marking: True
+          clearing: true
+          marking: true
           data_type: PointCloud2
+
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         inflation_radius: 0.5
@@ -160,7 +162,8 @@ collision_monitor:
     source_timeout: 2.0
     min_points: 3
 
-    observation_sources: ["pointcloud"]
+    observation_sources:
+      - pointcloud
     pointcloud:
       type: pointcloud
       topic: /points2
@@ -171,13 +174,13 @@ collision_monitor:
       expected_update_rate: 0.0
       observation_persistence: 0.0
 
-    polygons: ["safety"]
+    polygons:
+      - safety
 
     safety:
       type: polygon
       action_type: stop
-      # 👇 Larger in front, shorter in back
-      points:
+      points: # Larger in front, shorter in back
         - [1.0, 0.8]
         - [1.0, -0.8]
         - [-0.3, -0.8]
@@ -185,4 +188,3 @@ collision_monitor:
       min_points: 3
       slowdown_ratio: 0.5
       priority: 1
-  
