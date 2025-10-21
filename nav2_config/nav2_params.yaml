@@ -160,14 +160,29 @@ collision_monitor:
     source_timeout: 2.0
     min_points: 3
 
-    # At least one observation source is required
     observation_sources: ["pointcloud"]
     pointcloud:
       type: pointcloud
-      topic: /points2    # or /cloud_obstacles if that’s your topic
+      topic: /points2
       obstacle_keep_time: 0.5
       raytrace_range: 15.0
       min_obstacle_height: 0.05
       max_obstacle_height: 5.0
       expected_update_rate: 0.0
       observation_persistence: 0.0
+
+    polygons: ["safety"]
+
+    safety:
+      type: polygon
+      action_type: stop
+      # 👇 Larger in front, shorter in back
+      points: [
+        [1.0, 0.8],
+        [1.0, -0.8],
+        [-0.3, -0.8],
+        [-0.3, 0.8]
+      ]
+      min_points: 3
+      slowdown_ratio: 0.5
+      priority: 1
