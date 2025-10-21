@@ -150,3 +150,24 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         inflation_radius: 0.5
+
+collision_monitor:
+  ros__parameters:
+    use_sim_time: true
+    base_frame_id: base_link
+    odom_frame_id: odom_stereo
+    transform_tolerance: 0.3
+    source_timeout: 2.0
+    min_points: 3
+
+    # At least one observation source is required
+    observation_sources: pointcloud
+    pointcloud:
+      type: PointCloud2
+      topic: /points2    # or /cloud_obstacles if that’s your topic
+      obstacle_keep_time: 0.5
+      raytrace_range: 15.0
+      min_obstacle_height: 0.05
+      max_obstacle_height: 5.0
+      expected_update_rate: 0.0
+      observation_persistence: 0.0
