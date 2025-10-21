@@ -171,17 +171,17 @@ collision_monitor:
       expected_update_rate: 0.0
       observation_persistence: 0.0
 
-    polygons: ["safety"]
+    polygons: ["SafetyZone"]
 
-    safety:
-      type: polygon
-      action_type: stop
-      points: [
-        [1.0, 0.8],
-        [1.0, -0.8],
-        [-0.3, -0.8],
-        [-0.3, 0.8]
-      ]
-      min_points: 3
+    SafetyZone:
+      type: "polygon"
+      action_type: "stop"
+      # Note: must be a string with brackets!
+      points: "[[1.0, 0.8], [1.0, -0.8], [-0.3, -0.8], [-0.3, 0.8]]"
+      min_points: 4
       slowdown_ratio: 0.5
       priority: 1
+      visualize: true
+      enabled: true
+      polygon_pub_topic: "safety_zone"
+
