@@ -184,8 +184,3 @@ collision_monitor:
       visualize: true
       enabled: true
       polygon_pub_topic: "safety_zone"
-
-opennav_docking:
-  ros__parameters:
-    use_sim_time: true
-    enabled: false
