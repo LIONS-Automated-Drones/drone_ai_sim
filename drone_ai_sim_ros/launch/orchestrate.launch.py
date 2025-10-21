@@ -24,61 +24,65 @@ def generate_launch_description():
         #     name="odom_to_baselink",
         #     arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "base_link"],
         # ),
-        Node(
+               Node(
             package="tf2_ros",
-            executable="static_transform_publisher",
+            executable="transform_publisher",
             name="baselink_to_left",
-            arguments=["0.1", "0", "0.05", "0", "0", "0", "base_link", "stereo_left_link"],
-            parameters=[{
-                "use_sim_time": True
-            }]
+            arguments=[
+                "base_link", "stereo_left_link",
+                "0.1", "0", "0.05", "0", "0", "0",
+                "--rate", "10", "--use-sim-time"
+            ],
         ),
         Node(
             package="tf2_ros",
-            executable="static_transform_publisher",
+            executable="transform_publisher",
             name="baselink_to_right",
-            arguments=["0.1", "0.12", "0.05", "0", "0", "0", "base_link", "stereo_right_link"],
-            parameters=[{
-                "use_sim_time": True
-            }]
+            arguments=[
+                "base_link", "stereo_right_link",
+                "0.1", "0.12", "0.05", "0", "0", "0",
+                "--rate", "10", "--use-sim-time"
+            ],
         ),
         Node(
             package="tf2_ros",
-            executable="static_transform_publisher",
+            executable="transform_publisher",
             name="rightlink_to_sim_right",
-            arguments=["0", "0", "0", "0", "0", "0", "stereo_right_link", "x500_0/stereo_right_link/stereo_right"],
-            parameters=[{
-                "use_sim_time": True
-            }]
+            arguments=[
+                "stereo_right_link", "x500_0/stereo_right_link/stereo_right",
+                "0", "0", "0", "0", "0", "0",
+                "--rate", "10", "--use-sim-time"
+            ],
         ),
         Node(
             package="tf2_ros",
-            executable="static_transform_publisher",
+            executable="transform_publisher",
             name="baselink_to_imu",
-            arguments=["0", "0", "0", "0", "0", "0", "base_link", "x500_0/imu_link/imu_sensor"],
-            parameters=[{
-                "use_sim_time": True
-            }]
+            arguments=[
+                "base_link", "x500_0/imu_link/imu_sensor",
+                "0", "0", "0", "0", "0", "0",
+                "--rate", "10", "--use-sim-time"
+            ],
         ),
-
         Node(
             package="tf2_ros",
-            executable="static_transform_publisher",
+            executable="transform_publisher",
             name="stereo_left_optical_tf",
-            arguments=["0", "0", "0", "-1.5708", "0", "-1.5708", "stereo_left_link", "stereo_left_optical_frame"],
-            parameters=[{
-                "use_sim_time": True
-            }]
+            arguments=[
+                "stereo_left_link", "stereo_left_optical_frame",
+                "0", "0", "0", "-1.5708", "0", "-1.5708",
+                "--rate", "10", "--use-sim-time"
+            ],
         ),
-
         Node(
             package="tf2_ros",
-            executable="static_transform_publisher",
+            executable="transform_publisher",
             name="stereo_right_optical_tf",
-            arguments=["0", "0", "0", "-1.5708", "0", "-1.5708", "stereo_right_link", "stereo_right_optical_frame"],
-            parameters=[{
-                "use_sim_time": True
-            }]
+            arguments=[
+                "stereo_right_link", "stereo_right_optical_frame",
+                "0", "0", "0", "-1.5708", "0", "-1.5708",
+                "--rate", "10", "--use-sim-time"
+            ],
         ),
 
         # Republisher
