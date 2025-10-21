@@ -29,7 +29,8 @@ setup(
         'console_scripts': [
             'republish = drone_ai_sim_ros.republish:main',
             'odom_tf_broadcaster = drone_ai_sim_ros.odom_tf_broadcaster:main',
-            'pointcloud_websocket_bridge = drone_ai_sim_ros.pointcloud_websocket_bridge:main'
+            'pointcloud_websocket_bridge = drone_ai_sim_ros.pointcloud_websocket_bridge:main',
+            'dynamic_tf_publisher = drone_ai_sim_ros.dynamic_tf_publisher:main'
         ],
     },
 )
