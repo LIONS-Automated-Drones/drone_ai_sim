@@ -160,8 +160,32 @@ class MissionCompleteTool(BaseTool):
     async def _arun(self, summary: str) -> str:
         """Marks the mission as complete."""
         return f"Mission complete: {summary}"
-    
-tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool(), RotateTool(), MissionCompleteTool()]
+
+class CancelTool(BaseTool):
+    name: str = "cancel_mission"
+    description: str = "Cancels any currently running commands then hovers in place."
+
+    def _run(self, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Cancels current mission and hovers in place"""
+        print("--- EXECUTING TOOL: Canceling and holding... ---")
+        success = await drone_service.cancel()
+        return "Cancel complete." if success else "Cancel failed."
+
+tools = [
+    TakeoffTool(),
+    LandTool(),
+    MoveRelativeBodyTool(),
+    MoveRelativeNorthTool(),
+    OrbitTool(),
+    RTLTool(),
+    TelemetryTool(),
+    RotateTool(),
+    MissionCompleteTool(),
+    CancelTool(),
+    ]
 
 def get_tools():
     return tools
