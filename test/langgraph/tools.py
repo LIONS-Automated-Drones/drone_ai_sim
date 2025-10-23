@@ -107,7 +107,7 @@ class OrbitTool(BaseTool):
     async def _arun(self, radius_m: float, velocity_ms: float, *args, **kwargs) -> str:
         """Orbits the drone."""
         print(f"--- EXECUTING TOOL: Orbiting with radius {radius_m}m... ---")
-        success = await drone_service.do_orbit(radius_m, velocity_ms)
+        success = await drone_service.do_orbit(float(radius_m), float(velocity_ms))
         return "Orbit complete." if success else "Orbit failed."
 
 class RTLTool(BaseTool):
