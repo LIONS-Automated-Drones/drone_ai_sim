@@ -157,8 +157,9 @@ class MissionCompleteTool(BaseTool):
         """Marks the mission as complete."""
         return f"Mission complete: {summary}"
 
-    async def _arun(self, summary: str) -> str:
+    async def _arun(self, *args, **kwargs) -> str:
         """Marks the mission as complete."""
+        summary = kwargs.get("summary") or kwargs.get("message") or (args[0] if args else "")
         return f"Mission complete: {summary}"
 
 class CancelTool(BaseTool):
