@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
-from tools import get_tools
+from tools import get_tools, drone_service
 from graph import build_graph
 from mission_log import set_websocket_callback, mission_log
 from environment_settings import ENVIRONMENT_SETTINGS
@@ -33,6 +33,11 @@ agent = agent_prompt | llm.bind_tools(tools)
 # --- 2. Build and Run the Graph ---
 app = build_graph(agent, tool_names)
 
+# --- 3. Set up global variables ---
+cancel_flag = asyncio.Event()
+mission_running = asyncio.Event()
+manual_override_engaged = asyncio.Event()
+
 async def handle_mission(mission_prompt, send_message_callback):
     """Handles a single mission prompt, streaming back results."""
     async for event in app.astream({"messages": [HumanMessage(content=mission_prompt)]}):
@@ -46,6 +51,17 @@ async def handle_mission(mission_prompt, send_message_callback):
 
 async def websocket_handler(websocket):
     """Handles WebSocket connections and messages."""
+    global cancel_flag
+    global mission_running
+    global manual_override_engaged
+    global drone_service
+
+    cancel_flag.clear()
+    mission_running.clear()
+    manual_override_engaged.clear()
+
+    current_mission_task = None
+
     print("React dashboard connected.")
     set_websocket_callback(websocket.send)
     try:
