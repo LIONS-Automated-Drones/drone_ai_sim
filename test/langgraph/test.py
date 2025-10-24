@@ -102,10 +102,9 @@ async def websocket_handler(websocket):
                 manual_override_engaged.set()
                 await websocket.send("Mission cancellation requested. Entering manual override...")
                 await drone_service.cancel()
-                try:
+                if current_mission_task:
                     current_mission_task.cancel()
-                finally:
-                    continue
+
             # If there's a mission already running, reject new mission
             elif mission_running.is_set():
                 # Optionally cancel the previous mission or inform the client
@@ -114,9 +113,8 @@ async def websocket_handler(websocket):
             else:
                 # Start new mission as background task
                 print(f"Starting mission: {message}")
+                mission_running.set()
                 current_mission_task = asyncio.create_task(handle_mission(message, websocket.send))
-            print(f"Received mission from dashboard: {message}")
-            await handle_mission(message, websocket.send)
     except websockets.exceptions.ConnectionClosed:
         print("React dashboard disconnected.")
     except Exception as e:
