@@ -399,6 +399,18 @@ class DroneService:
             mission_log(f"--- Error in telemetry streaming: {e}")
             self.telemetry_streaming = False
 
+    async def cancel(self):
+        """
+        Cancels all currently running commands on the drone
+        AND sets the drone to hover in place at its current location
+        """
+        if not self.is_connected:
+            mission_log("--- Drone not connected. Cannot cancel.")
+            return False
+        await self.drone.action.hold()
+        mission_log("--- Canceling and holding...")
+        return True
+
 # Helper to fix a common issue with anext in some environments
 async def anext(ait):
     return await ait.__anext__()
