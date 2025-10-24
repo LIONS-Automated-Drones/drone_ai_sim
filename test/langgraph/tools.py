@@ -16,20 +16,7 @@ class TakeoffTool(BaseTool):
 
     async def _arun(self, *args, **kwargs) -> str:
         """Connects, arms, and takes off the drone."""
-        print("--- EXECUTING TOOL: Connecting and taking off... ---")
-        connected = await drone_service.connect()
-        if not connected:
-            return "Failed to connect to the drone."
-        
-        armed = await drone_service.arm()
-        if not armed:
-            return "Failed to arm the drone."
-
-        took_off = await drone_service.takeoff()
-        if not took_off:
-            return "Failed to take off."
-
-        return "Takeoff sequence initiated successfully. The drone is now airborne."
+        return await drone_service.perform_takeoff_sequence()
 
 class LandTool(BaseTool):
     name: str = "land"

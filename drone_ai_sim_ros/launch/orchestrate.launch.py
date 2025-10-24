@@ -28,7 +28,7 @@ def generate_launch_description():
             package="tf2_ros",
             executable="static_transform_publisher",
             name="baselink_to_left",
-            arguments=["0.1", "0", "0.05", "0", "0", "0", "base_link", "stereo_left_link"],
+            arguments=["0.1",  "0.12", "0.05", "0", "0", "0", "base_link", "stereo_left_link"],
             parameters=[{
                 "use_sim_time": True
             }]
@@ -37,7 +37,7 @@ def generate_launch_description():
             package="tf2_ros",
             executable="static_transform_publisher",
             name="baselink_to_right",
-            arguments=["0.1", "0.12", "0.05", "0", "0", "0", "base_link", "stereo_right_link"],
+            arguments=["0.1", "-0.12", "0.05", "0", "0", "0", "base_link", "stereo_right_link"],
             parameters=[{
                 "use_sim_time": True
             }]

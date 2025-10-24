@@ -2,6 +2,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 import websockets
+from aiohttp import web
 
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -124,6 +125,36 @@ async def websocket_handler(websocket):
         except:
             pass  # Connection might be closed
 
+async def velocity_api_handler(request):
+    """HTTP API endpoint for velocity commands from ROS node."""
+    try:
+        data = await request.json()
+        vx = data.get('vx', 0.0)
+        vy = data.get('vy', 0.0)
+        vz = data.get('vz', 0.0)
+        yaw_rate = data.get('yaw_rate', 0.0)
+        
+        # Send velocity command to drone
+        success = await drone_service.send_velocity(vx, vy, vz, yaw_rate)
+        
+        if success:
+            return web.json_response({'status': 'ok'})
+        else:
+            return web.json_response({'status': 'error', 'message': 'Failed to send velocity command'}, status=500)
+    except Exception as e:
+        return web.json_response({'status': 'error', 'message': str(e)}, status=500)
+
+async def run_velocity_api_server():
+    """Starts the HTTP API server for velocity commands."""
+    app = web.Application()
+    app.router.add_post('/api/velocity', velocity_api_handler)
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 3223)
+    await site.start()
+    print(f"--- Velocity API server started at http://0.0.0.0:3223 ---")
+
 async def run_websocket_server():
     """Starts the WebSocket server."""
     async with websockets.serve(websocket_handler, ENVIRONMENT_SETTINGS.server_address, ENVIRONMENT_SETTINGS.server_port):
@@ -148,6 +179,9 @@ async def run_cli():
         prompt_count += 1
 
 async def main():
+    # Start velocity API server in background
+    asyncio.create_task(run_velocity_api_server())
+    
     if ENVIRONMENT_SETTINGS.use_react:
         await run_websocket_server()
     else:

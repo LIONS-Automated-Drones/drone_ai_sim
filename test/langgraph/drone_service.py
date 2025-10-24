@@ -4,6 +4,7 @@ import json
 import time
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
+from mavsdk.offboard import OffboardError, VelocityBodyYawspeed
 from utils import calculate_distance
 from mission_log import mission_log, set_telemetry_callback, send_telemetry
 from environment_settings import ENVIRONMENT_SETTINGS
@@ -13,6 +14,7 @@ class DroneService:
     def __init__(self):
         self.drone = System()
         self.is_connected = False
+        self.velocities_processed = 0
         
         # Load connection settings from environment variables
         self.virtual = ENVIRONMENT_SETTINGS.is_gazebo
@@ -27,7 +29,25 @@ class DroneService:
         self.telemetry_streaming = False
         self.telemetry_task = None
         self.takeoff_position = None  # Store initial position for relative calculations
+        
+        # Offboard control
+        self.offboard_running = False
 
+    async def perform_takeoff_sequence(self) -> str:
+        print("--- EXECUTING TOOL: Connecting and taking off... ---")
+        connected = await self.connect()
+        if not connected:
+            return "Failed to connect to the drone."
+        
+        armed = await self.arm()
+        if not armed:
+            return "Failed to arm the drone."
+
+        took_off = await self.takeoff()
+        if not took_off:
+            return "Failed to take off."
+        return "Takeoff sequence initiated successfully. The drone is now airborne."
+    
     async def connect(self):
         """
         Connects to the drone - either virtual (Gazebo UDP) or physical (Serial SiK radio).
@@ -410,6 +430,92 @@ class DroneService:
         await self.drone.action.hold()
         mission_log("--- Canceling and holding...")
         return True
+    
+    async def start_offboard_mode(self):
+        """
+        Starts offboard control mode for velocity commands.
+        Note: Assumes drone is already connected and in the air (caller handles this)
+        """
+        if not await self.check_if_in_air():
+            return False
+        
+        if self.offboard_running:
+            return True
+        
+        try:
+            # Set initial velocity to zero
+            await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
+            await self.drone.offboard.start()
+            self.offboard_running = True
+            mission_log("--- Offboard mode started for velocity control")
+            return True
+        except OffboardError as e:
+            mission_log(f"--- Offboard start failed: {e}")
+            self.offboard_running = False
+            return False
+    
+    async def stop_offboard_mode(self):
+        """
+        Stops offboard control mode.
+        """
+        if not self.offboard_running:
+            return True
+        
+        try:
+            await self.drone.offboard.stop()
+            self.offboard_running = False
+            mission_log("--- Offboard mode stopped")
+            return True
+        except Exception as e:
+            mission_log(f"--- Error stopping offboard mode: {e}")
+            return False
+        
+    async def check_if_in_air(self):
+        """
+        Checks if the drone is in air.
+        """
+        if not self.is_connected:
+            return False
+        async for in_air in self.drone.telemetry.in_air():
+            return in_air
+        return False
+
+    
+    async def send_velocity(self, vx: float, vy: float, vz: float, yaw_rate: float):
+        """
+        Sends velocity commands to the drone in body frame.
+        This should be called at ~20Hz for smooth control.
+        
+        Args:
+            vx (float): Forward velocity in m/s (positive = forward)
+            vy (float): Right velocity in m/s (positive = right)
+            vz (float): Down velocity in m/s (positive = down, NED frame)
+            yaw_rate (float): Yaw rate in deg/s (positive = clockwise)
+        
+        Returns:
+            bool: True if command sent successfully, False otherwise
+        """
+        if not await self.check_if_in_air():
+            return False
+        
+        # Start offboard mode if not already running
+        if not self.offboard_running:
+            success = await self.start_offboard_mode()
+            print(f"--- Starting offboard mode: Success - {success}")
+            if not success:
+                return False
+        
+        try:
+            self.velocities_processed += 1
+            if self.velocities_processed % 100 == 0:
+                print(f"--- Received velocity command: {vx}, {vy}, {vz}, {yaw_rate}")
+            await self.drone.offboard.set_velocity_body(
+                VelocityBodyYawspeed(vx, vy, vz, yaw_rate)
+            )
+            return True
+        except Exception as e:
+            mission_log(f"--- Error sending velocity command: {e}")
+            return False
 
 # Helper to fix a common issue with anext in some environments
 async def anext(ait):
