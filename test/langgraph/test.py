@@ -40,12 +40,31 @@ manual_override_engaged = asyncio.Event()
 
 async def handle_mission(mission_prompt, send_message_callback):
     """Handles a single mission prompt, streaming back results."""
-    async for event in app.astream({"messages": [HumanMessage(content=mission_prompt)]}):
-        for v in event.values():
-            if "messages" in v:
-                message_content = v["messages"][-1].content
-                if message_content:
-                    await send_message_callback(message_content)
+    try:
+        async for event in app.astream({"messages": [HumanMessage(content=mission_prompt)]}):
+            if not cancel_flag.is_set():
+                for v in event.values():
+                    if not cancel_flag.is_set():
+                        if "messages" in v:
+                            message_content = v["messages"][-1].content
+                            if message_content:
+                                await send_message_callback(message_content)
+                    else:
+                        await send_message_callback("Canceling the current mission")
+                        mission_log("Cancel flag is set, terminating")
+                        await drone_service.cancel()
+                        break
+            else:
+                await send_message_callback("Canceling the current mission")
+                mission_log("Cancel flag is set, terminating")
+                await drone_service.cancel()
+                break
+    except asyncio.CancelledError:
+        await drone_service.cancel()
+        await send_message_callback("Canceling the current mission")
+        mission_log("Mission forcibly cancelled")
+    mission_running.clear()
+    cancel_flag.clear()
     mission_log("Mission completed")
 
 
@@ -66,6 +85,36 @@ async def websocket_handler(websocket):
     set_websocket_callback(websocket.send)
     try:
         async for message in websocket:
+            msg = message.strip().lower()
+            # Reset the manual override flag if the dashboard sends "restart"
+            if msg == "restart":
+                print("Received RESTART signal from dashboard.")
+                manual_override_engaged.clear()
+                await websocket.send("Manual override disengaged.")
+            # Check if manual override is engaged
+            elif manual_override_engaged.is_set():
+                print("Manual override still engaged. Ignoring message...")
+                await websocket.send("Manual override is still engaged. Please deactivate before continuing.")
+            # Set cancel_flag if the dashboard sends "cancel", either by the manual override button or through the chatbox
+            elif msg == "cancel":
+                print("Received CANCEL signal from dashboard.")
+                cancel_flag.set()
+                manual_override_engaged.set()
+                await websocket.send("Mission cancellation requested. Entering manual override...")
+                await drone_service.cancel()
+                try:
+                    current_mission_task.cancel()
+                finally:
+                    continue
+            # If there's a mission already running, reject new mission
+            elif mission_running.is_set():
+                # Optionally cancel the previous mission or inform the client
+                print("Mission already running, cannot process command...")
+                await websocket.send("Please cancel the previous mission or wait for it to complete before sending additional mission commands.")
+            else:
+                # Start new mission as background task
+                print(f"Starting mission: {message}")
+                current_mission_task = asyncio.create_task(handle_mission(message, websocket.send))
             print(f"Received mission from dashboard: {message}")
             await handle_mission(message, websocket.send)
     except websockets.exceptions.ConnectionClosed:
