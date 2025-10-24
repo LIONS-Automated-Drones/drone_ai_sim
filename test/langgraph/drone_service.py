@@ -147,7 +147,7 @@ class DroneService:
                 latitude_deg,
                 longitude_deg
             )
-            if distance < 1:  # 1-meter tolerance
+            if distance < 0.5:  # 1-meter tolerance
                 mission_log("--- Arrived at target location.")
                 break
             await asyncio.sleep(1)
