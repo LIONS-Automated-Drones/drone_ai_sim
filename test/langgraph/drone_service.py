@@ -64,6 +64,9 @@ class DroneService:
         if not self.is_connected:
             mission_log("--- Drone not connected. Cannot arm.")
             return False
+        if await is_in_air():
+            mission_log("--- Drone is in air. Already armed.")
+            return True
         mission_log("--- Arming drone...")
         await self.drone.action.arm()
         return True
@@ -76,6 +79,9 @@ class DroneService:
             mission_log("--- Drone not connected. Cannot take off.")
             return False
         
+        if await is_in_air():
+            mission_log("--- Drone is in air. Already in air.")
+            return True
         # Store takeoff position for relative calculations
         position = await anext(self.drone.telemetry.position())
         self.takeoff_position = {
