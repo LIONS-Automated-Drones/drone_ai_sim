@@ -2,6 +2,7 @@ import asyncio
 from langchain.tools import BaseTool
 from drone_service import DroneService
 from utils import get_bearing_and_move, get_cardinal_and_move
+from mission_log import mission_log
 
 # Create a single instance of our drone interface
 drone_service = DroneService()
@@ -175,6 +176,19 @@ class CancelTool(BaseTool):
         success = await drone_service.cancel()
         return "Cancel complete." if success else "Cancel failed."
 
+class TakePictureTool(BaseTool):
+    name: str = "take_picture"
+    description: str = "Takes a picture with the drone's camera."
+
+    def _run(self, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Takes a picture"""
+        print("--- EXECUTING TOOL: Taking picture... ---")
+        mission_log("TAKE_PICTURE", log_type="COMMAND")
+        return "Picture taken successfully."
+
 tools = [
     TakeoffTool(),
     LandTool(),
@@ -186,6 +200,7 @@ tools = [
     RotateTool(),
     MissionCompleteTool(),
     CancelTool(),
+    TakePictureTool(),
     ]
 
 def get_tools():
