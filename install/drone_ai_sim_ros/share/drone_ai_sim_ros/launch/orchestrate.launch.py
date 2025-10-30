@@ -241,7 +241,7 @@ def generate_launch_description():
                 "use_sim_time": True,
                 "model_name": "yolov8n.pt",
                 "confidence_threshold": 0.5,
-                "target_frame": "odom_stereo"  # Use odom_stereo instead of map (available immediately)
+                "target_frame": "base_link"  # Use base_link - always available from static TF
             }]
         ),
         # Web video server

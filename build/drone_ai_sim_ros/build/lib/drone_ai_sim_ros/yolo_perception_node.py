@@ -75,7 +75,7 @@ class YOLOPerceptionNode(Node):
         self.latest_color_image = None
         self.latest_disparity_image = None
         self.latest_camera_info = None
-        self.camera_frame = None
+        self.camera_frame = "stereo_left_optical_frame"  # Use the TF frame, not Gazebo frame
         self.camera_model_initialized = False  # Track if camera model has been initialized
 
         # QoS profile for sensor data (required for camera topics)
@@ -121,14 +121,12 @@ class YOLOPerceptionNode(Node):
         self.get_logger().info("✅ YOLO Perception Node initialized")
         self.get_logger().info("🔍 Subscribed to: /left/image_rect_color, /disparity, /stereo/left/camera_info")
         self.get_logger().info("🛎️  Service available: trigger_detection")
+        self.get_logger().info(f"📷 Camera frame: {self.camera_frame}")
         self.get_logger().info(f"📍 Target frame: {self.target_frame}")
 
     def color_callback(self, msg: Image):
         """Store the latest color image."""
         self.latest_color_image = msg
-        if self.camera_frame is None:
-            self.camera_frame = msg.header.frame_id
-            self.get_logger().info(f"📷 Camera frame detected: {self.camera_frame}")
 
     def disparity_callback(self, msg: DisparityImage):
         """Store the latest disparity image."""
