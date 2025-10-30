@@ -1,0 +1,25 @@
+[0.430s] Invoking command in '/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/drone_ai_sim_ros build --build-base /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build install --record /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log --single-version-externally-managed install_data
+[0.556s] running egg_info
+[0.568s] writing ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/PKG-INFO
+[0.568s] writing dependency_links to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/dependency_links.txt
+[0.568s] writing entry points to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/entry_points.txt
+[0.568s] writing requirements to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/requires.txt
+[0.568s] writing top-level names to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/top_level.txt
+[0.586s] reading manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+[0.586s] writing manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+[0.586s] running build
+[0.586s] running build_py
+[0.586s] running install
+[0.588s] running install_lib
+[0.597s] running install_data
+[0.597s] copying launch/orchestrate.launch.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/share/drone_ai_sim_ros/launch
+[0.597s] running install_egg_info
+[0.608s] removing '/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info' (and everything under it)
+[0.608s] Copying ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info
+[0.608s] running install_scripts
+[0.670s] Installing odom_tf_broadcaster script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.670s] Installing pointcloud_websocket_bridge script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.671s] Installing republish script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.671s] Installing yolo_perception_node script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.672s] writing list of installed files to '/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log'
+[0.690s] Invoked command in '/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/drone_ai_sim_ros build --build-base /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build install --record /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log --single-version-externally-managed install_data

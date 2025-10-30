@@ -1,0 +1,272 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Found rosidl_default_generators: 1.6.0 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rosidl_adapter: 4.6.6 (/opt/ros/jazzy/share/rosidl_adapter/cmake)
+-- Found geometry_msgs: 5.3.6 (/opt/ros/jazzy/share/geometry_msgs/cmake)
+-- Found ament_cmake_ros: 0.12.0 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+-- Found PythonExtra: /usr/bin/python3  
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter Development NumPy Development.Module Development.Embed 
+-- Configuring done (2.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/raytech/repos/drone_ai_sim/build/ares_interfaces
+[  2%] Generating type hashes for ROS interfaces
+[  2%] Built target ament_cmake_python_copy_ares_interfaces
+running egg_info
+creating ares_interfaces.egg-info
+writing ares_interfaces.egg-info/PKG-INFO
+writing dependency_links to ares_interfaces.egg-info/dependency_links.txt
+writing top-level names to ares_interfaces.egg-info/top_level.txt
+writing manifest file 'ares_interfaces.egg-info/SOURCES.txt'
+[  2%] Built target ares_interfaces__rosidl_generator_type_description
+[  4%] Generating C code for ROS interfaces
+[  6%] Generating C++ code for ROS interfaces
+reading manifest file 'ares_interfaces.egg-info/SOURCES.txt'
+writing manifest file 'ares_interfaces.egg-info/SOURCES.txt'
+[  6%] Built target ament_cmake_python_build_ares_interfaces_egg
+[  6%] Built target ares_interfaces__cpp
+[  9%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_c.dir/rosidl_generator_c/ares_interfaces/msg/detail/sensed_object__functions.c.o
+[ 11%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_c.dir/rosidl_generator_c/ares_interfaces/msg/detail/sensed_object__description.c.o
+[ 13%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_c.dir/rosidl_generator_c/ares_interfaces/msg/detail/sensed_object__type_support.c.o
+[ 15%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_c.dir/rosidl_generator_c/ares_interfaces/srv/detail/detect_objects__description.c.o
+[ 18%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_c.dir/rosidl_generator_c/ares_interfaces/srv/detail/detect_objects__functions.c.o
+[ 20%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_c.dir/rosidl_generator_c/ares_interfaces/srv/detail/detect_objects__type_support.c.o
+[ 22%] Linking C shared library libares_interfaces__rosidl_generator_c.so
+[ 22%] Built target ares_interfaces__rosidl_generator_c
+[ 25%] Generating C type support for eProsima Fast-RTPS
+[ 27%] Generating C type support dispatch for ROS interfaces
+[ 29%] Generating C++ type support for eProsima Fast-RTPS
+[ 31%] Generating C introspection for ROS interfaces
+[ 34%] Generating C++ introspection for ROS interfaces
+[ 36%] Generating C++ type support dispatch for ROS interfaces
+[ 38%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/ares_interfaces/msg/sensed_object__type_support.cpp.o
+[ 40%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/ares_interfaces/srv/detect_objects__type_support.cpp.o
+[ 43%] Building C object CMakeFiles/ares_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ares_interfaces/msg/detail/sensed_object__type_support.c.o
+[ 45%] Building C object CMakeFiles/ares_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ares_interfaces/srv/detail/detect_objects__type_support.c.o
+[ 47%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ares_interfaces/msg/detail/sensed_object__type_support.cpp.o
+[ 50%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ares_interfaces/srv/detail/detect_objects__type_support.cpp.o
+[ 52%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ares_interfaces/msg/detail/sensed_object__type_support_c.cpp.o
+[ 54%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ares_interfaces/msg/sensed_object__type_support.cpp.o
+[ 56%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ares_interfaces/srv/detect_objects__type_support.cpp.o
+[ 59%] Linking CXX shared library libares_interfaces__rosidl_typesupport_c.so
+[ 61%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ares_interfaces/srv/detail/detect_objects__type_support_c.cpp.o
+[ 63%] Linking C shared library libares_interfaces__rosidl_typesupport_introspection_c.so
+[ 63%] Built target ares_interfaces__rosidl_typesupport_c
+[ 63%] Built target ares_interfaces__rosidl_typesupport_introspection_c
+[ 65%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ares_interfaces/srv/detail/dds_fastrtps/detect_objects__type_support.cpp.o
+[ 68%] Building CXX object CMakeFiles/ares_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ares_interfaces/msg/detail/dds_fastrtps/sensed_object__type_support.cpp.o
+[ 70%] Linking CXX shared library libares_interfaces__rosidl_typesupport_cpp.so
+[ 70%] Built target ares_interfaces__rosidl_typesupport_cpp
+[ 72%] Linking CXX shared library libares_interfaces__rosidl_typesupport_introspection_cpp.so
+[ 75%] Linking CXX shared library libares_interfaces__rosidl_typesupport_fastrtps_c.so
+[ 75%] Built target ares_interfaces__rosidl_typesupport_introspection_cpp
+[ 75%] Built target ares_interfaces__rosidl_typesupport_fastrtps_c
+[ 77%] Linking CXX shared library libares_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[ 77%] Built target ares_interfaces__rosidl_typesupport_fastrtps_cpp
+[ 77%] Built target ares_interfaces
+[ 79%] Generating Python code for ROS interfaces
+[ 79%] Built target ares_interfaces__py
+[ 84%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_py.dir/rosidl_generator_py/ares_interfaces/srv/_detect_objects_s.c.o
+[ 84%] Building C object CMakeFiles/ares_interfaces__rosidl_generator_py.dir/rosidl_generator_py/ares_interfaces/msg/_sensed_object_s.c.o
+[ 86%] Linking C shared library libares_interfaces__rosidl_generator_py.so
+[ 86%] Built target ares_interfaces__rosidl_generator_py
+[ 90%] Building C object CMakeFiles/ares_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/ares_interfaces/_ares_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o
+[ 90%] Building C object CMakeFiles/ares_interfaces_s__rosidl_typesupport_c.dir/rosidl_generator_py/ares_interfaces/_ares_interfaces_s.ep.rosidl_typesupport_c.c.o
+[ 93%] Building C object CMakeFiles/ares_interfaces_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/ares_interfaces/_ares_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o
+[ 95%] Linking C shared module rosidl_generator_py/ares_interfaces/ares_interfaces_s__rosidl_typesupport_c.so
+[ 97%] Linking C shared module rosidl_generator_py/ares_interfaces/ares_interfaces_s__rosidl_typesupport_introspection_c.so
+[100%] Linking C shared module rosidl_generator_py/ares_interfaces/ares_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[100%] Built target ares_interfaces_s__rosidl_typesupport_c
+[100%] Built target ares_interfaces_s__rosidl_typesupport_introspection_c
+[100%] Built target ares_interfaces_s__rosidl_typesupport_fastrtps_c
+-- Install configuration: ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ament_index/resource_index/rosidl_interfaces/ares_interfaces
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/msg/SensedObject.json
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/srv/DetectObjects.json
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__type_support.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__functions.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__description.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__functions.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__struct.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__type_support.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/rosidl_generator_c__visibility_control.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/sensed_object.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__functions.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__type_support.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__type_support.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__struct.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__functions.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__description.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detect_objects.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/library_path.sh
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/library_path.dsv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_generator_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_generator_c.so" to ""
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__rosidl_typesupport_fastrtps_c.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__rosidl_typesupport_fastrtps_c.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_fastrtps_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_fastrtps_c.so" to ""
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__type_support.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__rosidl_typesupport_introspection_c.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__type_support.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__rosidl_typesupport_introspection_c.h
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_introspection_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_introspection_c.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_c.so" to ""
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__struct.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__traits.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__type_support.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__builder.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/sensed_object.hpp
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__traits.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__builder.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__struct.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__type_support.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detect_objects.hpp
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__rosidl_typesupport_fastrtps_cpp.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/dds_fastrtps
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__rosidl_typesupport_fastrtps_cpp.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/dds_fastrtps
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_fastrtps_cpp.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__rosidl_typesupport_introspection_cpp.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/msg/detail/sensed_object__type_support.cpp
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv
+-- Up-to-date: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__rosidl_typesupport_introspection_cpp.hpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/include/ares_interfaces/ares_interfaces/srv/detail/detect_objects__type_support.cpp
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_introspection_cpp.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_introspection_cpp.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_cpp.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_typesupport_cpp.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/pythonpath.sh
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/pythonpath.dsv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces-0.0.1-py3.12.egg-info
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces-0.0.1-py3.12.egg-info/top_level.txt
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces-0.0.1-py3.12.egg-info/PKG-INFO
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces-0.0.1-py3.12.egg-info/SOURCES.txt
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces-0.0.1-py3.12.egg-info/dependency_links.txt
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/__init__.py
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/_ares_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_c.so
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_fastrtps_c.so
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/_ares_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/_ares_interfaces_s.ep.rosidl_typesupport_c.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_introspection_c.so
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg/__init__.py
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg/_sensed_object.py
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg/_sensed_object_s.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv/__init__.py
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv/_detect_objects_s.c
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv/_detect_objects.py
+Listing '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces'...
+Compiling '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/__init__.py'...
+Listing '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg'...
+Compiling '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg/__init__.py'...
+Compiling '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/msg/_sensed_object.py'...
+Listing '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv'...
+Compiling '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv/__init__.py'...
+Compiling '/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/srv/_detect_objects.py'...
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_fastrtps_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_fastrtps_c.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_introspection_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_introspection_c.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_c.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages/ares_interfaces/ares_interfaces_s__rosidl_typesupport_c.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_generator_py.so
+-- Set non-toolchain portion of runtime path of "/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/libares_interfaces__rosidl_generator_py.so" to ""
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/msg/SensedObject.idl
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/srv/DetectObjects.idl
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/msg/SensedObject.msg
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/srv/DetectObjects.srv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ament_index/resource_index/package_run_dependencies/ares_interfaces
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ament_index/resource_index/parent_prefix_path/ares_interfaces
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/ament_prefix_path.sh
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/ament_prefix_path.dsv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/path.sh
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/environment/path.dsv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/local_setup.bash
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/local_setup.sh
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/local_setup.zsh
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/local_setup.dsv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/package.dsv
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ament_index/resource_index/packages/ares_interfaces
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_generator_cExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_generator_cExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_introspection_cExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_cExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_generator_cppExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_cppExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_generator_pyExport.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/export_ares_interfaces__rosidl_generator_pyExport-noconfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/rosidl_cmake-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfacesConfig.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/cmake/ares_interfacesConfig-version.cmake
+-- Installing: /home/raytech/repos/drone_ai_sim/install/ares_interfaces/share/ares_interfaces/package.xml

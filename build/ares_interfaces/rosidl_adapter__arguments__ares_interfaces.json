@@ -1,0 +1,7 @@
+{
+  "package_name": "ares_interfaces",
+  "non_idl_tuples": [
+    "/home/raytech/repos/drone_ai_sim/ares_interfaces:msg/SensedObject.msg",
+    "/home/raytech/repos/drone_ai_sim/ares_interfaces:srv/DetectObjects.srv"
+  ]
+}

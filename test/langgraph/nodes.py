@@ -11,27 +11,67 @@ tools = get_tools()
 def call_model(state: AgentState, agent):
     """
     The agent node, which reasons about the next action.
+    Injects world memory context into the conversation.
     """
-    response = agent.invoke(state)
-    return {"messages": [response]}
+    # Format world memory for the prompt
+    world_memory = state.get("world_memory", {})
+    if world_memory:
+        memory_lines = ["CURRENT WORLD MODEL (objects you have sensed):"]
+        for obj_id, obj_data in world_memory.items():
+            coords = obj_data["map_coords"]
+            memory_lines.append(
+                f"  - {obj_id}: {obj_data['class_name']} at ({coords['x']:.2f}, {coords['y']:.2f}, {coords['z']:.2f})"
+            )
+        memory_string = "\n".join(memory_lines)
+        
+        # Add memory context as a system-style message if not already present
+        # We'll inject it by temporarily adding it to messages
+        from langchain_core.messages import HumanMessage
+        memory_msg = HumanMessage(content=f"\n\n{memory_string}\n")
+        
+        # Create modified state with memory context
+        modified_state = dict(state)
+        modified_state["messages"] = list(state["messages"]) + [memory_msg]
+        response = agent.invoke(modified_state)
+        
+        # Remove the memory message from the actual conversation
+        return {"messages": [response]}
+    else:
+        response = agent.invoke(state)
+        return {"messages": [response]}
 
 async def sequential_tool_node(state: AgentState) -> dict:
     """
     A custom tool node that executes only the first tool call found and provides
     feedback to the agent if multiple tools were suggested.
+    Also updates world_memory when sense_objects tool is called.
     """
     last_message = state["messages"][-1]
     
     tool_call = last_message.tool_calls[0]
     
+    # Extract the actual tool name (handle prefixes like "default_api." or "default_api_")
+    tool_name = tool_call["name"]
+    original_name = tool_name
+    
+    # Handle dot-separated prefix (e.g., "default_api.sense_objects")
+    if "." in tool_name:
+        tool_name = tool_name.split(".")[-1]
+        print(f"[DEBUG] Tool name had dot prefix: '{original_name}' -> '{tool_name}'")
+    # Handle underscore prefix without dot (e.g., "default_api_sense_objects")
+    elif tool_name.startswith("default_api_"):
+        tool_name = tool_name.replace("default_api_", "", 1)
+        print(f"[DEBUG] Tool name had underscore prefix: '{original_name}' -> '{tool_name}'")
+    
     tool_to_call = None
     for tool in tools:
-        if tool.name == tool_call["name"]:
+        if tool.name == tool_name:
             tool_to_call = tool
             break
 
     if tool_to_call is None:
-        raise ValueError(f"Tool '{tool_call['name']}' not found.")
+        available_tools = [t.name for t in tools]
+        raise ValueError(f"Tool '{tool_call['name']}' not found. Parsed name: '{tool_name}'. Available tools: {available_tools}")
         
     response = await tool_to_call.ainvoke(tool_call["args"])
     
@@ -46,7 +86,47 @@ async def sequential_tool_node(state: AgentState) -> dict:
         )
         messages_to_add.append(HumanMessage(content=feedback_message))
     
-    return {"messages": messages_to_add}
+    # Update world_memory if sense_objects was called
+    result = {"messages": messages_to_add}
+    if tool_name == "sense_objects":
+        updated_memory = parse_sense_objects_response(str(response), state.get("world_memory", {}))
+        result["world_memory"] = updated_memory
+    
+    return result
+
+
+def parse_sense_objects_response(response: str, current_memory: dict) -> dict:
+    """
+    Parse the sense_objects tool response and update world memory.
+    
+    Args:
+        response: The tool response string
+        current_memory: The current world_memory dictionary
+        
+    Returns:
+        Updated world_memory dictionary
+    """
+    # Create a copy of current memory
+    memory = dict(current_memory)
+    
+    # Parse the response to extract object information
+    # Format: "  - object_id: class_name at map coordinates (x, y, z) meters"
+    import re
+    pattern = r'- ([a-zA-Z0-9_]+): ([a-zA-Z0-9_]+) at map coordinates \(([0-9.-]+), ([0-9.-]+), ([0-9.-]+)\) meters'
+    
+    matches = re.findall(pattern, response)
+    for match in matches:
+        object_id, class_name, x, y, z = match
+        memory[object_id] = {
+            "class_name": class_name,
+            "map_coords": {
+                "x": float(x),
+                "y": float(y),
+                "z": float(z)
+            }
+        }
+    
+    return memory
 
 def ask_for_clarification_node(state: AgentState) -> dict:
     """

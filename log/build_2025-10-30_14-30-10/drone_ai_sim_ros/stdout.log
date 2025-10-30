@@ -1,0 +1,38 @@
+running develop
+Removing /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone-ai-sim-ros.egg-link (link to .)
+running egg_info
+writing ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/PKG-INFO
+writing dependency_links to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/dependency_links.txt
+writing entry points to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/entry_points.txt
+writing requirements to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/requires.txt
+writing top-level names to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/top_level.txt
+reading manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+writing manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+running build
+running build_py
+copying drone_ai_sim_ros/yolo_perception_node.py -> /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros
+running install
+running install_lib
+creating /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+copying /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros/__init__.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+copying /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros/republish.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+copying /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros/odom_tf_broadcaster.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+copying /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros/pointcloud_websocket_bridge.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+copying /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros/yolo_perception_node.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+byte-compiling /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros/republish.py to republish.cpython-312.pyc
+byte-compiling /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros/odom_tf_broadcaster.py to odom_tf_broadcaster.cpython-312.pyc
+byte-compiling /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros/pointcloud_websocket_bridge.py to pointcloud_websocket_bridge.cpython-312.pyc
+byte-compiling /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros/yolo_perception_node.py to yolo_perception_node.cpython-312.pyc
+running install_data
+copying resource/drone_ai_sim_ros -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/share/ament_index/resource_index/packages
+copying package.xml -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/share/drone_ai_sim_ros
+copying launch/orchestrate.launch.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/share/drone_ai_sim_ros/launch
+running install_egg_info
+Copying ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info
+running install_scripts
+Installing odom_tf_broadcaster script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+Installing pointcloud_websocket_bridge script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+Installing republish script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+Installing yolo_perception_node script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+writing list of installed files to '/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log'

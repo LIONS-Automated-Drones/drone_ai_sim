@@ -1,0 +1,24 @@
+[0.387s] Invoking command in '/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros': AMENT_PREFIX_PATH=/home/raytech/repos/drone_ai_sim/install/ares_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/raytech/repos/drone_ai_sim/install/ares_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/drone_ai_sim_ros build --build-base /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build install --record /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log --single-version-externally-managed install_data
+[0.511s] running egg_info
+[0.519s] writing ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/PKG-INFO
+[0.519s] writing dependency_links to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/dependency_links.txt
+[0.519s] writing entry points to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/entry_points.txt
+[0.520s] writing requirements to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/requires.txt
+[0.520s] writing top-level names to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/top_level.txt
+[0.536s] reading manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+[0.536s] writing manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+[0.537s] running build
+[0.537s] running build_py
+[0.537s] running install
+[0.540s] running install_lib
+[0.548s] running install_data
+[0.548s] running install_egg_info
+[0.559s] removing '/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info' (and everything under it)
+[0.559s] Copying ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info
+[0.560s] running install_scripts
+[0.620s] Installing odom_tf_broadcaster script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.620s] Installing pointcloud_websocket_bridge script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.621s] Installing republish script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.621s] Installing yolo_perception_node script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.621s] writing list of installed files to '/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log'
+[0.638s] Invoked command in '/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros' returned '0': AMENT_PREFIX_PATH=/home/raytech/repos/drone_ai_sim/install/ares_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/raytech/repos/drone_ai_sim/install/ares_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/drone_ai_sim_ros build --build-base /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build install --record /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log --single-version-externally-managed install_data

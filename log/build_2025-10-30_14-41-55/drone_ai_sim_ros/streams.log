@@ -1,0 +1,27 @@
+[0.416s] Invoking command in '/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/drone_ai_sim_ros build --build-base /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build install --record /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log --single-version-externally-managed install_data
+[0.540s] running egg_info
+[0.550s] writing ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/PKG-INFO
+[0.551s] writing dependency_links to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/dependency_links.txt
+[0.551s] writing entry points to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/entry_points.txt
+[0.551s] writing requirements to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/requires.txt
+[0.551s] writing top-level names to ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/top_level.txt
+[0.569s] reading manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+[0.570s] writing manifest file '../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info/SOURCES.txt'
+[0.570s] running build
+[0.570s] running build_py
+[0.570s] copying drone_ai_sim_ros/yolo_perception_node.py -> /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros
+[0.571s] running install
+[0.573s] running install_lib
+[0.584s] copying /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build/lib/drone_ai_sim_ros/yolo_perception_node.py -> /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros
+[0.584s] byte-compiling /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros/yolo_perception_node.py to yolo_perception_node.cpython-312.pyc
+[0.585s] running install_data
+[0.585s] running install_egg_info
+[0.594s] removing '/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info' (and everything under it)
+[0.595s] Copying ../build/drone_ai_sim_ros/drone_ai_sim_ros.egg-info to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages/drone_ai_sim_ros-0.0.0-py3.12.egg-info
+[0.596s] running install_scripts
+[0.655s] Installing odom_tf_broadcaster script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.656s] Installing pointcloud_websocket_bridge script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.656s] Installing republish script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.656s] Installing yolo_perception_node script to /home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/drone_ai_sim_ros
+[0.656s] writing list of installed files to '/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log'
+[0.674s] Invoked command in '/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/install/ares_interfaces/lib/python3.12/site-packages:/home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros:/home/raytech/repos/drone_ai_sim/install/drone_ai_sim_ros/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/drone_ai_sim_ros build --build-base /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/build install --record /home/raytech/repos/drone_ai_sim/build/drone_ai_sim_ros/install.log --single-version-externally-managed install_data
