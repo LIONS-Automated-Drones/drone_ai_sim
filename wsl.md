@@ -50,6 +50,8 @@ git checkout dev
 ```
 
 #### UPDATE SDF
+
+**Option 1: Depot World (Complex environment)**
 ```bash
 cd ~/sd1_ws/PX4-Autopilot/Tools/simulation/gz/models/x500
 > model.sdf  # Empties the file
@@ -60,6 +62,19 @@ cd ~/sd1_ws/PX4-Autopilot/Tools/simulation/gz/worlds
 nano default.sdf
 # PASTE THE CODE FROM world_modified.sdf then ctrl + x
 ```
+
+**Option 2: Chair & Human World (Simple testing environment)**
+```bash
+cd ~/sd1_ws/PX4-Autopilot/Tools/simulation/gz/models/x500
+> model.sdf  # Empties the file
+nano model.sdf
+# PASTE THE CODE FROM drone_modified.sdf then ctrl + x
+cd ~/sd1_ws/PX4-Autopilot/Tools/simulation/gz/worlds
+> default.sdf
+nano default.sdf
+# PASTE THE CODE FROM world/chair_human.sdf then ctrl + x
+```
+Note: The chair_human world is better for testing object detection with yolo model
 
 #### Install ROS-Gazebo Packages
 ```bash
