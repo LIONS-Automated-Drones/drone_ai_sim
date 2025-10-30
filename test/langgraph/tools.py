@@ -1,8 +1,17 @@
 import asyncio
+import time
 from langchain.tools import BaseTool
 from drone_service import DroneService
 from utils import get_bearing_and_move, get_cardinal_and_move
 from mission_log import mission_log
+
+# Import ROS client (will be initialized on first use)
+try:
+    from ros_client import get_ros_node
+    ROS_AVAILABLE = True
+except ImportError:
+    ROS_AVAILABLE = False
+    mission_log("Warning: ROS client not available. Sense objects tool will be disabled.")
 
 # Create a single instance of our drone interface
 drone_service = DroneService()
@@ -189,6 +198,112 @@ class TakePictureTool(BaseTool):
         mission_log("TAKE_PICTURE", log_type="COMMAND")
         return "Picture taken successfully."
 
+class SenseObjectsTool(BaseTool):
+    name: str = "sense_objects"
+    description: str = "Uses the drone's camera and YOLO object detection to identify objects in view and store their 3D locations in memory. Call this when you want to know 'what do you see?'"
+
+    def _run(self, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Triggers object detection and returns detected objects with their 3D positions"""
+        print("--- EXECUTING TOOL: Sensing objects... ---")
+        
+        if not ROS_AVAILABLE:
+            return "Error: ROS client not available. Cannot sense objects."
+        
+        try:
+            # Get the ROS node (starts thread if needed, sets up environment)
+            node = get_ros_node()
+            
+            # Import the service type (environment already configured in ROS client thread)
+            from ares_interfaces.srv import DetectObjects
+            
+            # Create service client
+            mission_log("--- Creating service client for object detection...")
+            client = node.create_client(DetectObjects, 'trigger_detection')
+            
+            # Wait for service to be available (with timeout) - use asyncio.to_thread to avoid blocking
+            mission_log("--- Waiting for object detection service to be available...")
+            timeout_sec = 10.0
+            service_available = await asyncio.to_thread(client.wait_for_service, timeout_sec=timeout_sec)
+            
+            if not service_available:
+                return f"Error: Object detection service not available after {timeout_sec}s. Is the yolo_perception_node running?"
+            
+            mission_log("--- Calling object detection service...")
+            
+            # Create request
+            request = DetectObjects.Request()
+            request.trigger = True
+            
+            # Call service and wait for result in a thread-safe way
+            # The ROS node is already spinning in its own thread, so the future will complete automatically
+            def call_service_sync():
+                """Synchronous wrapper to call the service and wait for result."""
+                future = client.call_async(request)
+                
+                # Wait for the future to complete with a timeout
+                # The ROS node thread will process the response automatically
+                max_wait_time = 15.0  # YOLO can take a few seconds
+                start_time = time.time()
+                
+                while not future.done() and (time.time() - start_time) < max_wait_time:
+                    time.sleep(0.1)
+                
+                if not future.done():
+                    mission_log("--- Service call timed out")
+                    return None  # Timeout
+                
+                return future.result()
+            
+            mission_log("--- Waiting for object detection to complete...")
+            response = await asyncio.to_thread(call_service_sync)
+            
+            if response is None:
+                return "Error: Object detection service timed out after 15 seconds."
+            
+            if not response.sensed_objects:
+                mission_log("--- No objects detected")
+                return "I looked around but didn't detect any recognizable objects in the current view."
+            
+            # Format the detected objects
+            mission_log(f"--- Detected {len(response.sensed_objects)} objects")
+            result_lines = [f"Detected {len(response.sensed_objects)} object(s):"]
+            
+            # Track objects by class for unique IDs
+            class_counts = {}
+            
+            for obj in response.sensed_objects:
+                class_name = obj.class_name
+                
+                # Generate unique ID
+                if class_name not in class_counts:
+                    class_counts[class_name] = 0
+                class_counts[class_name] += 1
+                object_id = f"{class_name}_{class_counts[class_name]}"
+                
+                # Format coordinates
+                x, y, z = obj.map_coords.x, obj.map_coords.y, obj.map_coords.z
+                
+                result_lines.append(
+                    f"  - {object_id}: {class_name} at map coordinates ({x:.2f}, {y:.2f}, {z:.2f}) meters"
+                )
+                
+                mission_log(f"--- Sensed: {object_id} at ({x:.2f}, {y:.2f}, {z:.2f})")
+            
+            result = "\n".join(result_lines)
+            result += "\n\nNote: These objects have been stored in my memory with their precise 3D locations."
+            
+            return result
+            
+        except Exception as e:
+            error_msg = f"Error during object detection: {str(e)}"
+            mission_log(f"--- {error_msg}")
+            import traceback
+            mission_log(traceback.format_exc())
+            return error_msg
+
 tools = [
     TakeoffTool(),
     LandTool(),
@@ -201,6 +316,7 @@ tools = [
     MissionCompleteTool(),
     CancelTool(),
     TakePictureTool(),
+    SenseObjectsTool(),
     ]
 
 def get_tools():
