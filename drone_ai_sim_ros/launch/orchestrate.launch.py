@@ -190,8 +190,8 @@ def generate_launch_description():
                 "publish_tf": True
             }],
             remappings=[
-                ("left/image_rect", "/stereo/left/image_rect"),  # Revert: YOLO was working with this
-                ("right/image_rect", "/stereo/right/image_rect"),  # Revert: YOLO was working with this
+                ("left/image_rect", "/stereo/left/image_rect"),  
+                ("right/image_rect", "/stereo/right/image_rect"),
                 ("left/camera_info", "/stereo/left/camera_info"),
                 ("right/camera_info", "/stereo/right/camera_info"),
                 ("imu", "/imu/data"),
@@ -225,8 +225,8 @@ def generate_launch_description():
             remappings=[
                 ("odom", "/stereo_odometry/odom"),
                 ("imu", "/imu/data"),
-                ("left/image_rect", "/stereo/left/image_rect"),  # Revert: YOLO was working with this
-                ("right/image_rect", "/stereo/right/image_rect"),  # Revert: YOLO was working with this
+                ("left/image_rect", "/stereo/left/image_rect"),
+                ("right/image_rect", "/stereo/right/image_rect"),
                 ("left/camera_info", "/stereo/left/camera_info"),
                 ("right/camera_info", "/stereo/right/camera_info"),
             ],
