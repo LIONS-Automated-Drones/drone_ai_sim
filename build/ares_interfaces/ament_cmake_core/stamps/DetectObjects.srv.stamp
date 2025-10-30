@@ -1,7 +1,0 @@
-# DetectObjects.srv
-# Service to trigger object detection and return detected objects
-
-bool trigger
----
-ares_interfaces/SensedObject[] sensed_objects
-

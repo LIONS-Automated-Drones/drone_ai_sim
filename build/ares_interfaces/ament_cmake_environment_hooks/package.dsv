@@ -1,4 +1,0 @@
-source;share/ares_interfaces/local_setup.bash
-source;share/ares_interfaces/local_setup.dsv
-source;share/ares_interfaces/local_setup.sh
-source;share/ares_interfaces/local_setup.zsh

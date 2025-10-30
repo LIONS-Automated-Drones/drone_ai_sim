@@ -1,1 +1,0 @@
-/home/raytech/repos/drone_ai_sim/drone_ai_sim_ros/launch/orchestrate.launch.py
