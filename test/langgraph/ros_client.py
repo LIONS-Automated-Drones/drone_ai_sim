@@ -26,7 +26,7 @@ class MinimalROSClient(Node):
     
     def __init__(self):
         super().__init__('langgraph_ros_client')
-        self.get_logger().info('✅ LangGraph ROS Client Node initialized')
+        self.get_logger().info('LangGraph ROS Client Node initialized')
 
 
 def spin_ros_node():

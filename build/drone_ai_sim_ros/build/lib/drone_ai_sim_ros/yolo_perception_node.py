@@ -43,7 +43,7 @@ class YOLOPerceptionNode(Node):
         # Check if YOLO is available
         if not YOLO_AVAILABLE:
             self.get_logger().error(
-                "❌ ultralytics package not found! Please install: pip install ultralytics"
+                "ERROR: ultralytics package not found! Please install: pip install ultralytics"
             )
             raise ImportError("ultralytics package required for YOLO detection")
 
@@ -57,9 +57,9 @@ class YOLOPerceptionNode(Node):
         self.target_frame = self.get_parameter('target_frame').get_parameter_value().string_value
 
         # Initialize YOLO model
-        self.get_logger().info(f"🔄 Loading YOLO model: {model_name}")
+        self.get_logger().info(f"Loading YOLO model: {model_name}")
         self.yolo_model = YOLO(model_name)
-        self.get_logger().info("✅ YOLO model loaded successfully")
+        self.get_logger().info("YOLO model loaded successfully")
 
         # Initialize CV bridge
         self.bridge = CvBridge()
@@ -109,7 +109,7 @@ class YOLOPerceptionNode(Node):
             sensor_qos
         )
         
-        self.get_logger().info("📡 Subscribed with sensor_data QoS profile")
+        self.get_logger().info("Subscribed with sensor_data QoS profile")
 
         # Service
         self.detection_service = self.create_service(
@@ -118,11 +118,11 @@ class YOLOPerceptionNode(Node):
             self.detection_service_callback
         )
 
-        self.get_logger().info("✅ YOLO Perception Node initialized")
-        self.get_logger().info("🔍 Subscribed to: /left/image_rect_color, /disparity, /stereo/left/camera_info")
-        self.get_logger().info("🛎️  Service available: trigger_detection")
-        self.get_logger().info(f"📷 Camera frame: {self.camera_frame}")
-        self.get_logger().info(f"📍 Target frame: {self.target_frame}")
+        self.get_logger().info("YOLO Perception Node initialized")
+        self.get_logger().info("Subscribed to: /left/image_rect_color, /disparity, /stereo/left/camera_info")
+        self.get_logger().info("Service available: trigger_detection")
+        self.get_logger().info(f"Camera frame: {self.camera_frame}")
+        self.get_logger().info(f"Target frame: {self.target_frame}")
 
     def color_callback(self, msg: Image):
         """Store the latest color image."""
@@ -142,11 +142,11 @@ class YOLOPerceptionNode(Node):
                 self.cam_model.fromCameraInfo(msg)
                 self.camera_model_initialized = True
                 self.get_logger().info(
-                    f"✅ Camera model initialized: fx={self.cam_model.fx():.2f}, "
+                    f"Camera model initialized: fx={self.cam_model.fx():.2f}, "
                     f"fy={self.cam_model.fy():.2f}, cx={self.cam_model.cx():.2f}, cy={self.cam_model.cy():.2f}"
                 )
             except Exception as e:
-                self.get_logger().error(f"❌ Failed to initialize camera model: {str(e)}")
+                self.get_logger().error(f"Failed to initialize camera model: {str(e)}")
                 import traceback
                 self.get_logger().error(traceback.format_exc())
 
@@ -154,20 +154,20 @@ class YOLOPerceptionNode(Node):
         """
         Service callback that triggers object detection and returns 3D positions.
         """
-        self.get_logger().info("🔔 Detection service called")
+        self.get_logger().info("Detection service called")
 
         # Check if we have all required data
         if self.latest_color_image is None:
-            self.get_logger().warning("⚠️ No color image available yet")
+            self.get_logger().warning("No color image available yet")
             return response
         
         if self.latest_disparity_image is None:
-            self.get_logger().warning("⚠️ No disparity image available yet")
+            self.get_logger().warning("No disparity image available yet")
             return response
         
         # Check if camera model is initialized
         if self.latest_camera_info is None or not self.camera_model_initialized:
-            self.get_logger().warning("⚠️ Camera info not available or camera model not initialized")
+            self.get_logger().warning("Camera info not available or camera model not initialized")
             return response
 
         try:
@@ -175,7 +175,7 @@ class YOLOPerceptionNode(Node):
             cv_image = self.bridge.imgmsg_to_cv2(self.latest_color_image, desired_encoding='bgr8')
             
             # Run YOLO detection
-            self.get_logger().info("🔍 Running YOLO detection...")
+            self.get_logger().info("Running YOLO detection...")
             results = self.yolo_model(cv_image, conf=self.confidence_threshold, verbose=False)
             
             # Process detections
@@ -186,7 +186,7 @@ class YOLOPerceptionNode(Node):
             for result in results:
                 total_detections += len(result.boxes)
             
-            self.get_logger().info(f"📊 YOLO found {total_detections} detections above confidence threshold {self.confidence_threshold}")
+            self.get_logger().info(f"YOLO found {total_detections} detections above confidence threshold {self.confidence_threshold}")
             
             for result in results:
                 boxes = result.boxes
@@ -220,15 +220,15 @@ class YOLOPerceptionNode(Node):
                             f"    → Map coords: ({map_point.x:.2f}, {map_point.y:.2f}, {map_point.z:.2f})"
                         )
                     else:
-                        self.get_logger().warning(f"    ⚠️ Could not compute 3D position for {class_name}")
+                        self.get_logger().warning(f"Could not compute 3D position for {class_name}")
             
             response.sensed_objects = sensed_objects
-            self.get_logger().info(f"✅ Detection complete: {detection_count} objects with valid 3D positions")
+            self.get_logger().info(f"Detection complete: {detection_count} objects with valid 3D positions")
             
         except CvBridgeError as e:
-            self.get_logger().error(f"💥 CV Bridge error: {str(e)}")
+            self.get_logger().error(f"CV Bridge error: {str(e)}")
         except Exception as e:
-            self.get_logger().error(f"💥 Error during detection: {str(e)}")
+            self.get_logger().error(f"Error during detection: {str(e)}")
             import traceback
             self.get_logger().error(traceback.format_exc())
 
@@ -263,8 +263,8 @@ class YOLOPerceptionNode(Node):
             # Check for invalid disparity
             if np.isnan(disparity) or disparity <= 0:
                 self.get_logger().warning(
-                    f"❌ Invalid disparity at ({pixel_x}, {pixel_y}): {disparity} "
-                    f"(NaN={np.isnan(disparity)}, ≤0={disparity <= 0 if not np.isnan(disparity) else 'N/A'})"
+                    f"Invalid disparity at ({pixel_x}, {pixel_y}): {disparity} "
+                    f"(NaN={np.isnan(disparity)}, <=0={disparity <= 0 if not np.isnan(disparity) else 'N/A'})"
                 )
                 return None
             
@@ -275,18 +275,18 @@ class YOLOPerceptionNode(Node):
             depth = (focal_length * baseline) / disparity
             
             self.get_logger().info(
-                f"📏 Depth calculation: f={focal_length:.2f}px, baseline={baseline:.3f}m, "
-                f"disparity={disparity:.2f}px → depth={depth:.2f}m"
+                f"Depth calculation: f={focal_length:.2f}px, baseline={baseline:.3f}m, "
+                f"disparity={disparity:.2f}px -> depth={depth:.2f}m"
             )
             
             # Check for reasonable depth (e.g., between 0.1m and 50m)
             if depth < 0.1 or depth > 50.0:
-                self.get_logger().warning(f"❌ Unreasonable depth calculated: {depth:.2f}m (must be 0.1-50m)")
+                self.get_logger().warning(f"Unreasonable depth calculated: {depth:.2f}m (must be 0.1-50m)")
                 return None
             
             # Project pixel to 3D ray in camera frame
             try:
-                self.get_logger().info(f"🎯 Projecting pixel ({pixel_x}, {pixel_y}) to 3D ray...")
+                self.get_logger().info(f"Projecting pixel ({pixel_x}, {pixel_y}) to 3D ray...")
                 self.get_logger().info(
                     f"   Camera params: fx={self.cam_model.fx():.2f}, fy={self.cam_model.fy():.2f}, "
                     f"cx={self.cam_model.cx():.2f}, cy={self.cam_model.cy():.2f}"
@@ -298,15 +298,15 @@ class YOLOPerceptionNode(Node):
                 
                 if ray is None:
                     self.get_logger().error(
-                        f"❌ projectPixelTo3dRay returned None for pixel ({pixel_x}, {pixel_y}). "
+                        f"projectPixelTo3dRay returned None for pixel ({pixel_x}, {pixel_y}). "
                         f"Camera model may not be fully initialized."
                     )
                     return None
                 
-                self.get_logger().info(f"📐 Ray vector: ({ray[0]:.3f}, {ray[1]:.3f}, {ray[2]:.3f})")
+                self.get_logger().info(f"Ray vector: ({ray[0]:.3f}, {ray[1]:.3f}, {ray[2]:.3f})")
                 
             except Exception as e:
-                self.get_logger().error(f"❌ Failed to project pixel to 3D ray: {str(e)}")
+                self.get_logger().error(f"Failed to project pixel to 3D ray: {str(e)}")
                 import traceback
                 self.get_logger().error(traceback.format_exc())
                 return None
@@ -322,7 +322,7 @@ class YOLOPerceptionNode(Node):
             # Transform to map frame
             try:
                 # Wait for transform (with timeout)
-                self.get_logger().info(f"🔄 Looking up transform: {self.camera_frame} → {self.target_frame}")
+                self.get_logger().info(f"Looking up transform: {self.camera_frame} -> {self.target_frame}")
                 transform = self.tf_buffer.lookup_transform(
                     self.target_frame,
                     self.camera_frame,
@@ -331,12 +331,12 @@ class YOLOPerceptionNode(Node):
                 )
                 
                 point_map = tf2_geometry_msgs.do_transform_point(point_camera, transform)
-                self.get_logger().info(f"✅ Transformed to map frame: ({point_map.point.x:.2f}, {point_map.point.y:.2f}, {point_map.point.z:.2f})")
+                self.get_logger().info(f"Transformed to map frame: ({point_map.point.x:.2f}, {point_map.point.y:.2f}, {point_map.point.z:.2f})")
                 return point_map.point
                 
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, 
                     tf2_ros.ExtrapolationException) as e:
-                self.get_logger().warning(f"❌ TF2 transform failed ({self.camera_frame} → {self.target_frame}): {str(e)}")
+                self.get_logger().warning(f"TF2 transform failed ({self.camera_frame} -> {self.target_frame}): {str(e)}")
                 return None
                 
         except Exception as e:
