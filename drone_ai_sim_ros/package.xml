@@ -3,10 +3,11 @@
 <package format="3">
   <name>drone_ai_sim_ros</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROS 2 nodes for drone AI simulation and hardware integration</description>
   <maintainer email="connor@todo.todo">connor</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
+  <!-- Core ROS dependencies -->
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>stereo_msgs</depend>
@@ -16,6 +17,23 @@
   <depend>cv_bridge</depend>
   <depend>image_geometry</depend>
   <depend>ares_interfaces</depend>
+  
+  <!-- Simulation dependencies (for Gazebo mode) -->
+  <exec_depend condition="$ROS_DISTRO == jazzy">ros_gz_bridge</exec_depend>
+  <exec_depend condition="$ROS_DISTRO == humble">ros_gz_bridge</exec_depend>
+  <exec_depend>image_proc</exec_depend>
+  <exec_depend>stereo_image_proc</exec_depend>
+  
+  <!-- SLAM dependencies (both sim and hardware) -->
+  <exec_depend>rtabmap_odom</exec_depend>
+  <exec_depend>rtabmap_slam</exec_depend>
+  
+  <!-- Visualization -->
+  <exec_depend>web_video_server</exec_depend>
+  
+  <!-- Hardware dependencies (optional - for ZED 2i mode) -->
+  <!-- Note: zed_wrapper must be built separately from source -->
+  <!-- See ZED_HARDWARE_MIGRATION.md for installation instructions -->
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
