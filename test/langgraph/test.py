@@ -23,7 +23,17 @@ llm = ChatOpenAI(
 
 agent_prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a drone pilot AI. Your job is to execute the user's mission by calling tools one at a time. Think step-by-step. When the entire mission is complete, and only then, call the 'mission_complete' tool with a summary of what you did. You MUST NOT include JSON in your text responses. To execute an action, you MUST use the tool-calling feature exclusively."),
+        ("system", "You are a drone pilot AI with computer vision capabilities. Your job is to execute the user's mission by calling tools one at a time. Think step-by-step. "
+         "\n\nVISION CAPABILITIES:"
+         "\n- You have a 'sense_objects' tool that uses YOLO object detection to see what's around you"
+         "\n- Use this tool whenever asked 'what do you see?', 'look around', 'detect objects', etc."
+         "\n- Detected objects are stored in your world memory with their 3D map coordinates"
+         "\n- Your world model will be shown to you automatically when objects are detected"
+         "\n\nIMPORTANT RULES:"
+         "\n- Call tools ONE AT A TIME using the proper tool-calling feature"
+         "\n- NEVER write JSON in your text responses - use tool calls instead"
+         "\n- When the mission is complete, call 'mission_complete' with a summary"
+         "\n\nNow execute the user's request."),
         MessagesPlaceholder(variable_name="messages"),
     ]
 )
@@ -41,14 +51,27 @@ manual_override_engaged = asyncio.Event()
 async def handle_mission(mission_prompt, send_message_callback):
     """Handles a single mission prompt, streaming back results."""
     try:
-        async for event in app.astream({"messages": [HumanMessage(content=mission_prompt)]}):
+        # Initialize state with empty world memory
+        initial_state = {
+            "messages": [HumanMessage(content=mission_prompt)],
+            "world_memory": {}
+        }
+        mission_log(f"--- Starting mission with prompt: {mission_prompt}")
+        async for event in app.astream(initial_state):
+            mission_log(f"--- Graph event: {list(event.keys())}")
             if not cancel_flag.is_set():
                 for v in event.values():
                     if not cancel_flag.is_set():
                         if "messages" in v:
-                            message_content = v["messages"][-1].content
+                            last_msg = v["messages"][-1]
+                            mission_log(f"--- Message type: {type(last_msg).__name__}")
+                            message_content = last_msg.content
                             if message_content:
+                                mission_log(f"--- Sending message: {message_content[:100]}...")
                                 await send_message_callback(message_content)
+                            # Log tool calls if present
+                            if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+                                mission_log(f"--- Tool calls detected: {[tc['name'] for tc in last_msg.tool_calls]}")
                     else:
                         await send_message_callback("Canceling the current mission")
                         mission_log("Cancel flag is set, terminating")
@@ -63,9 +86,16 @@ async def handle_mission(mission_prompt, send_message_callback):
         await drone_service.cancel()
         await send_message_callback("Canceling the current mission")
         mission_log("Mission forcibly cancelled")
-    mission_running.clear()
-    cancel_flag.clear()
-    mission_log("Mission completed")
+    except Exception as e:
+        error_msg = f"Error during mission execution: {str(e)}"
+        mission_log(f"--- {error_msg}")
+        import traceback
+        mission_log(traceback.format_exc())
+        await send_message_callback(f"Mission failed: {str(e)}")
+    finally:
+        mission_running.clear()
+        cancel_flag.clear()
+        mission_log("Mission completed")
 
 
 async def websocket_handler(websocket):

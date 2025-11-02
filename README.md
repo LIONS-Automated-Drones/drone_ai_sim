@@ -21,18 +21,45 @@ nano depot.sdf
 #### Building package
 ```bash
 cd ~/sd1_ws/ # One level up from github repo
+
+# Build custom ROS2 interfaces (messages and services)
+colcon build --packages-select ares_interfaces
+
+# Build the main ROS2 package
 colcon build --packages-select drone_ai_sim_ros
+
+# Source the workspace
 source install/setup.bash
+```
+
+#### Vision System Dependencies
+The YOLO perception node requires specific Python packages. Install them with:
+```bash
+# Install NumPy 1.x (required for ROS2 Jazzy compatibility)
+pip install --break-system-packages "numpy==1.26.4"
+
+# Install OpenCV (headless version compatible with NumPy 1.x)
+pip install --break-system-packages "opencv-python-headless<4.9.0,>=4.6.0"
+
+# Install Ultralytics YOLO
+pip install --break-system-packages --no-deps "ultralytics>=8.0.0"
+
+# Install Ultralytics dependencies
+pip install --break-system-packages pillow pyyaml requests scipy tqdm psutil py-cpuinfo thop
 ```
 
 #### Running the project
 ```bash
-# Terminal 1
+# Terminal 1 - Start PX4 Gazebo simulation
 cd ~/sd1_ws/PX4-Autopilot/
 PX4_GZ_WORLD=depot HEADLESS=1 make px4_sitl gz_x500
-# Terminal 2 
+
+# Terminal 2 - Launch ROS2 nodes (includes YOLO perception)
+cd ~/sd1_ws/drone_ai_sim  # Navigate to repo root
+source install/setup.bash
 ros2 launch drone_ai_sim_ros orchestrate.launch.py
-# Terminal 3 
+
+# Terminal 3 - Run LangGraph agent
 source ~/sd1_ws/drone_venv/bin/activate
 # Change /mnt/c/SD1/drone_ai_sim to wherever you have the
 # repo on your computer. /mnt/c is your C:/ drive on windows

@@ -4,3 +4,11 @@ __pycache__/
 venv/
 .jpeg
 .vscode/
+
+# ROS2 build artifacts
+build/
+install/
+log/
+
+# YOLO model weights
+yolov8n.pt

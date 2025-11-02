@@ -64,8 +64,22 @@ class DroneService:
         if not self.is_connected:
             mission_log("--- Drone not connected. Cannot arm.")
             return False
+        in_air = await anext(self.drone.telemetry.in_air())
+        if in_air:
+            mission_log("--- Drone is in air. Already armed.")
+            return True
         mission_log("--- Arming drone...")
         await self.drone.action.arm()
+        
+        # Wait for the drone to actually be armed
+        mission_log("--- Waiting for arming to complete...")
+        async for armed in self.drone.telemetry.armed():
+            if armed:
+                mission_log("--- Drone is now armed.")
+                break
+        
+        # Give the system a moment to stabilize after arming
+        await asyncio.sleep(1)
         return True
 
     async def takeoff(self):
@@ -76,6 +90,10 @@ class DroneService:
             mission_log("--- Drone not connected. Cannot take off.")
             return False
         
+        in_air = await anext(self.drone.telemetry.in_air())
+        if in_air:
+            mission_log("--- Drone is in air. Already in air.")
+            return True
         # Store takeoff position for relative calculations
         position = await anext(self.drone.telemetry.position())
         self.takeoff_position = {

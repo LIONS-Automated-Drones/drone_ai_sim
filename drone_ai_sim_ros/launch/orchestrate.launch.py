@@ -102,6 +102,9 @@ def generate_launch_description():
                 ("camera_info", "/stereo/right/camera_info"),
                 ("image_rect", "/right/image_rect"),
             ],
+            parameters=[{
+                "use_sim_time": True  # Critical for simulation timing
+            }]
         ),
         Node(
             package="image_proc",
@@ -187,7 +190,7 @@ def generate_launch_description():
                 "publish_tf": True
             }],
             remappings=[
-                ("left/image_rect", "/stereo/left/image_rect"),
+                ("left/image_rect", "/stereo/left/image_rect"),  
                 ("right/image_rect", "/stereo/right/image_rect"),
                 ("left/camera_info", "/stereo/left/camera_info"),
                 ("right/camera_info", "/stereo/right/camera_info"),
@@ -227,6 +230,19 @@ def generate_launch_description():
                 ("left/camera_info", "/stereo/left/camera_info"),
                 ("right/camera_info", "/stereo/right/camera_info"),
             ],
+        ),
+        # YOLO Perception Node
+        Node(
+            package="drone_ai_sim_ros",
+            executable="yolo_perception_node",
+            name="yolo_perception_node",
+            output="screen",
+            parameters=[{
+                "use_sim_time": True,
+                "model_name": "yolov8n.pt",
+                "confidence_threshold": 0.5,
+                "target_frame": "base_link"  # Use base_link - always available from static TF
+            }]
         ),
         # Web video server
         Node(
