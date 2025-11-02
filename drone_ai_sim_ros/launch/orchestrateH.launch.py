@@ -241,65 +241,86 @@ def generate_launch_description():
         
         topics = rtabmap_image_topics[mode]
         
-        # nodes.append(Node(
-        #     package="rtabmap_odom",
-        #     executable="stereo_odometry",
-        #     name="stereo_odometry",
-        #     output="screen",
-        #     parameters=[{
-        #         "frame_id": "base_link",
-        #         "odom_frame_id": "odom_stereo",
-        #         "approx_sync": True,
-        #         "approx_sync_max_interval": 0.01,
-        #         "subscribe_imu": True,
-        #         "Vis/UseIMU": True,
-        #         "Vis/IMUGravity": True,
-        #         "queue_size": 30,
-        #         "use_sim_time": use_sim_time,
-        #         "publish_tf": True
-        #     }],
-        #     remappings=[
-        #         ("left/image_rect", topics['left']),
-        #         ("right/image_rect", topics['right']),
-        #         ("left/camera_info", topics['left_info']),
-        #         ("right/camera_info", topics['right_info']),
-        #         ("imu", topics['imu']),
-        #         ("odom", "/stereo_odometry/odom"),
-        #     ],
-        # ))
-        
-        # # RTAB-Map SLAM (BOTH MODES)
-        # nodes.append(Node(
-        #     package="rtabmap_slam",
-        #     executable="rtabmap",
-        #     name="rtabmap",
-        #     output="screen",
-        #     parameters=[{
-        #         "frame_id": "base_link",
-        #         "subscribe_stereo": True,
-        #         "approx_sync": True,
-        #         "subscribe_odom": True,
-        #         "subscribe_imu": True,
-        #         "delete_db_on_start": True,
-        #         "publish_tf": True,
-        #         "publish_odom_tf": False,
-        #         "publish_trajectory": True,
-        #         "Vis/UseIMU": True,
-        #         "Vis/IMUGravity": True,
-        #         "Optimizer/GravitySigma": "0.1",
-        #         "stereo_optical_frame_id": "stereo_left_optical_frame" if mode == 'sim' else "zed2i_left_camera_optical_frame",
-        #         "stereo_optical_frame_id_right": "stereo_right_optical_frame" if mode == 'sim' else "zed2i_right_camera_optical_frame",
-        #         "use_sim_time": use_sim_time
-        #     }],
-        #     remappings=[
-        #         ("odom", "/stereo_odometry/odom"),
-        #         ("imu", topics['imu']),
-        #         ("left/image_rect", topics['left']),
-        #         ("right/image_rect", topics['right']),
-        #         ("left/camera_info", topics['left_info']),
-        #         ("right/camera_info", topics['right_info']),
-        #     ],
-        # ))
+        # Stereo point cloud OLD FOR GAZEBO
+        Node(
+            package="stereo_image_proc",
+            executable="point_cloud_node",
+            name="stereo_pointcloud",
+            remappings=[
+                ("left/image_rect_color", "/left/image_rect_color"),
+                ("right/image_rect", "/right/image_rect"),
+                ("left/camera_info", "/stereo/left/camera_info"),
+                ("right/camera_info", "/stereo/right/camera_info"),
+                ("disparity", "/disparity"),
+            ],
+            parameters=[{
+                "approx_sync": True,
+                "queue_size": 20,
+                # Tell it to publish in left optical frame
+                "frame_id": "stereo_left_optical_frame",
+                "use_sim_time": True
+            }],
+        ),
+        # RTAB-Map SLAM OLD FOR GAZEBO
+        Node(
+            package="rtabmap_odom",
+            executable="stereo_odometry",
+            name="stereo_odometry",
+            output="screen",
+            parameters=[{
+                "frame_id": "base_link",
+                "odom_frame_id": "odom_stereo",
+                "approx_sync": True,
+                "approx_sync_max_interval": 0.01,
+                "subscribe_imu": True,
+                "Vis/UseIMU": True,
+                "Vis/IMUGravity": True,
+                "queue_size": 30,
+                "use_sim_time": True,
+                "publish_tf": True
+            }],
+            remappings=[
+                ("left/image_rect", "/stereo/left/image_rect"),
+                ("right/image_rect", "/stereo/right/image_rect"),
+                ("left/camera_info", "/stereo/left/camera_info"),
+                ("right/camera_info", "/stereo/right/camera_info"),
+                ("imu", "/imu/data"),
+                ("odom", "/stereo_odometry/odom"),
+            ],
+        ),
+
+        # -------------------- RTAB-Map SLAM  OLD FOR GAZEBO --------------------
+        Node(
+            package="rtabmap_slam",
+            executable="rtabmap",
+            name="rtabmap",
+            output="screen",
+            parameters=[{
+                "frame_id": "base_link",
+                "subscribe_stereo": True,
+                "approx_sync": True,
+                "subscribe_odom": True,
+                "subscribe_imu": True,
+                "delete_db_on_start": True,
+                "publish_tf": True,
+                "publish_odom_tf": False,
+                "publish_trajectory": True,
+                "Vis/UseIMU": True,
+                "Vis/IMUGravity": True,
+                "Optimizer/GravitySigma": "0.1",
+                "stereo_optical_frame_id": "stereo_left_optical_frame",
+                "stereo_optical_frame_id_right": "stereo_right_optical_frame",
+                "use_sim_time": True
+            }],
+            remappings=[
+                ("odom", "/stereo_odometry/odom"),
+                ("imu", "/imu/data"),
+                ("left/image_rect", "/stereo/left/image_rect"),
+                ("right/image_rect", "/stereo/right/image_rect"),
+                ("left/camera_info", "/stereo/left/camera_info"),
+                ("right/camera_info", "/stereo/right/camera_info"),
+            ],
+        ),
         
         # YOLO Perception Node (BOTH MODES - configured via parameters)
         nodes.append(Node(
