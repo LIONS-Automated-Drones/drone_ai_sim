@@ -180,3 +180,73 @@ transforms:
       z: 0.5
       w: -0.5000000000000001
 ---
+
+
+jamilr@jamilr-desktop:~$ ros2 run tf2_ros tf2_echo base_link zed2i_camera_link
+[INFO] [1762112804.597348183] [tf2_echo]: Waiting for transform base_link ->  zed2i_camera_link: Invalid frame ID "base_link" passed to canTransform argument target_frame - frame does not exist
+At time 0.0
+- Translation: [0.102, 0.000, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, -0.000, 0.000]
+- Rotation: in RPY (degree) [0.000, -0.000, 0.000]
+- Matrix:
+  1.000  0.000  0.000  0.102
+  0.000  1.000  0.000  0.000
+  0.000  0.000  1.000  0.000
+  0.000  0.000  0.000  1.000
+Failure at 1762112806.466
+Exception thrown:Could not find a connection between 'base_link' and 'zed2i_camera_link' because they are not part of the same tree.Tf has two or more unconnected trees.
+The current list of frames is:
+Frame odom exists with parent map.
+Frame zed2i_camera_link exists with parent odom.
+Frame zed2i_camera_center exists with parent zed2i_camera_link.
+Frame zed2i_left_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_left_camera_optical_frame exists with parent zed2i_left_camera_frame.
+Frame zed2i_right_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_right_camera_optical_frame exists with parent zed2i_right_camera_frame.
+
+Failure at 1762112807.466
+Exception thrown:Could not find a connection between 'base_link' and 'zed2i_camera_link' because they are not part of the same tree.Tf has two or more unconnected trees.
+The current list of frames is:
+Frame odom exists with parent map.
+Frame zed2i_camera_link exists with parent odom.
+Frame zed2i_camera_center exists with parent zed2i_camera_link.
+Frame zed2i_left_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_left_camera_optical_frame exists with parent zed2i_left_camera_frame.
+Frame zed2i_right_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_right_camera_optical_frame exists with parent zed2i_right_camera_frame.
+
+Failure at 1762112808.466
+Exception thrown:Could not find a connection between 'base_link' and 'zed2i_camera_link' because they are not part of the same tree.Tf has two or more unconnected trees.
+The current list of frames is:
+Frame odom exists with parent map.
+Frame zed2i_camera_link exists with parent odom.
+Frame zed2i_camera_center exists with parent zed2i_camera_link.
+Frame zed2i_left_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_left_camera_optical_frame exists with parent zed2i_left_camera_frame.
+Frame zed2i_right_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_right_camera_optical_frame exists with parent zed2i_right_camera_frame.
+
+Failure at 1762112809.466
+Exception thrown:Could not find a connection between 'base_link' and 'zed2i_camera_link' because they are not part of the same tree.Tf has two or more unconnected trees.
+The current list of frames is:
+Frame odom exists with parent map.
+Frame zed2i_camera_link exists with parent odom.
+Frame zed2i_camera_center exists with parent zed2i_camera_link.
+Frame zed2i_left_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_left_camera_optical_frame exists with parent zed2i_left_camera_frame.
+Frame zed2i_right_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_right_camera_optical_frame exists with parent zed2i_right_camera_frame.
+
+Failure at 1762112810.466
+Exception thrown:Could not find a connection between 'base_link' and 'zed2i_camera_link' because they are not part of the same tree.Tf has two or more unconnected trees.
+The current list of frames is:
+Frame odom exists with parent map.
+Frame zed2i_camera_link exists with parent odom.
+Frame zed2i_camera_center exists with parent zed2i_camera_link.
+Frame zed2i_left_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_left_camera_optical_frame exists with parent zed2i_left_camera_frame.
+Frame zed2i_right_camera_frame exists with parent zed2i_camera_center.
+Frame zed2i_right_camera_optical_frame exists with parent zed2i_right_camera_frame.
+
+^C[INFO] [1762112811.378538431] [rclcpp]: signal_handler(signum=2)
