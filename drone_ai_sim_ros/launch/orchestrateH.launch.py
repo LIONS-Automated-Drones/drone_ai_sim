@@ -55,7 +55,7 @@ def generate_launch_description():
                 executable="static_transform_publisher",
                 name="rightlink_to_sim_right",
                 arguments=["0", "0", "0", "0", "0", "0", "stereo_right_link", "x500_0/stereo_right_link/stereo_right"],
-                parameters=[{"use_sim_time": True}]
+                parameters=[{"use_sim_time": use_sim_time}]
             ))
             
             nodes.append(Node(
@@ -63,7 +63,7 @@ def generate_launch_description():
                 executable="static_transform_publisher",
                 name="baselink_to_imu",
                 arguments=["0", "0", "0", "0", "0", "0", "base_link", "x500_0/imu_link/imu_sensor"],
-                parameters=[{"use_sim_time": True}]
+                parameters=[{"use_sim_time": use_sim_time}]
             ))
             
             # Camera republisher (SIM ONLY - republishes from Gazebo topics)
@@ -72,7 +72,7 @@ def generate_launch_description():
                 executable="republish",
                 name="camera_republisher",
                 output="screen",
-                parameters=[{"use_sim_time": True}]
+                parameters=[{"use_sim_time": use_sim_time}]
             ))
             
             # Image rectification (SIM ONLY - Gazebo images need rectification)
@@ -86,7 +86,7 @@ def generate_launch_description():
                         ("camera_info", "/stereo/right/camera_info"),
                         ("image_rect", "/right/image_rect"),
                     ],
-                    parameters=[{"use_sim_time": True}]
+                    parameters=[{"use_sim_time": use_sim_time}]
                 ),
                 Node(
                     package="image_proc",
@@ -97,7 +97,7 @@ def generate_launch_description():
                         ("camera_info", "/stereo/left/camera_info"),
                         ("image_rect", "/left/image_rect_color"),
                     ],
-                    parameters=[{"use_sim_time": True}]
+                    parameters=[{"use_sim_time": use_sim_time}]
                 ),
                 Node(
                     package="image_proc",
@@ -108,7 +108,7 @@ def generate_launch_description():
                         ("camera_info", "/stereo/left/camera_info"),
                         ("image_rect", "/left/image_rect"),
                     ],
-                    parameters=[{"use_sim_time": True}]
+                    parameters=[{"use_sim_time": use_sim_time}]
                 ),
             ])
             
@@ -126,7 +126,7 @@ def generate_launch_description():
                 parameters=[{
                     "approx_sync": True,
                     "queue_size": 20,
-                    "use_sim_time": True
+                    "use_sim_time": use_sim_time
                 }],
             ))
             
@@ -146,7 +146,7 @@ def generate_launch_description():
                     "approx_sync": True,
                     "queue_size": 20,
                     "frame_id": "stereo_left_optical_frame",
-                    "use_sim_time": True
+                    "use_sim_time": use_sim_time
                 }],
             ))
         
