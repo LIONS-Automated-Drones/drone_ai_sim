@@ -3,11 +3,11 @@
 YOLO Perception Node for ARES Drone AI System
 
 This node subscribes to the stereo vision pipeline outputs (color image, disparity map, camera info)
-and provides an object detection service that:
+and provides an HTTP API for object detection that:
 1. Runs YOLOv8 on the color image to detect objects
 2. Uses the disparity map to calculate 3D positions
 3. Transforms detected objects to the map frame
-4. Returns a list of detected objects with their 3D locations
+4. Returns a list of detected objects with their 3D locations via HTTP
 """
 
 import rclpy
@@ -24,6 +24,9 @@ import numpy as np
 import tf2_ros
 import tf2_geometry_msgs
 from image_geometry import PinholeCameraModel
+import asyncio
+import threading
+from aiohttp import web
 
 try:
     from ultralytics import YOLO
@@ -91,7 +94,7 @@ class YOLOPerceptionNode(Node):
             color_topic = '/zed2i/zed_node/left/image_rect_color'
             depth_topic = '/zed2i/zed_node/depth/depth_registered'
             camera_info_topic = '/zed2i/zed_node/left/camera_info'
-            self.camera_frame = "zed2i_left_camera_optical_frame"
+            self.camera_frame = "zed2i_left_camera_optical_frame"+
             self.use_disparity = False  # ZED uses direct depth images
 
         # QoS profile for sensor data
@@ -138,18 +141,20 @@ class YOLOPerceptionNode(Node):
         self.get_logger().info(f"Operating in {self.mode.upper()} mode")
         self.get_logger().info("Subscribed with sensor_data QoS profile")
 
-        # Service
-        self.detection_service = self.create_service(
-            DetectObjects,
-            'trigger_detection',
-            self.detection_service_callback
-        )
+        # HTTP Server setup
+        self.http_port = 5444
+        self.app = None
+        self.runner = None
+        self.http_thread = None
+        
+        # Start HTTP server in a separate thread
+        self.start_http_server()
 
         self.get_logger().info("YOLO Perception Node initialized")
         self.get_logger().info(f"Color topic: {color_topic}")
         self.get_logger().info(f"Depth topic: {depth_topic}")
         self.get_logger().info(f"Camera info topic: {camera_info_topic}")
-        self.get_logger().info("Service available: trigger_detection")
+        self.get_logger().info(f"HTTP server running on port: {self.http_port}")
         self.get_logger().info(f"Camera frame: {self.camera_frame}")
         self.get_logger().info(f"Target frame: {self.target_frame}")
 
@@ -183,29 +188,82 @@ class YOLOPerceptionNode(Node):
                 import traceback
                 self.get_logger().error(traceback.format_exc())
 
-    def detection_service_callback(self, request, response):
+    def start_http_server(self):
+        """Start the aiohttp server in a separate thread."""
+        def run_server():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            self.app = web.Application()
+            self.app.router.add_post('/detect', self.handle_detect)
+            self.app.router.add_get('/health', self.handle_health)
+            
+            self.runner = web.AppRunner(self.app)
+            loop.run_until_complete(self.runner.setup())
+            site = web.TCPSite(self.runner, '0.0.0.0', self.http_port)
+            loop.run_until_complete(site.start())
+            
+            self.get_logger().info(f"HTTP server started on 0.0.0.0:{self.http_port}")
+            loop.run_forever()
+        
+        self.http_thread = threading.Thread(target=run_server, daemon=True)
+        self.http_thread.start()
+    
+    async def handle_health(self, request):
+        """Health check endpoint."""
+        return web.json_response({
+            'status': 'healthy',
+            'node': 'yolo_perception_node',
+            'port': self.http_port,
+            'mode': self.mode,
+            'camera_initialized': self.camera_model_initialized,
+            'has_color_image': self.latest_color_image is not None,
+            'has_depth_data': (self.latest_disparity_image is not None if self.use_disparity else self.latest_depth_image is not None)
+        })
+    
+    async def handle_detect(self, request):
+        """HTTP endpoint for object detection."""
+        self.get_logger().info("Detection HTTP endpoint called")
+        
+        # Perform detection (same logic as old service callback)
+        detected_objects = self.perform_detection()
+        
+        if detected_objects is None:
+            return web.json_response({
+                'success': False,
+                'error': 'Detection failed - missing required data',
+                'objects': []
+            }, status=500)
+        
+        return web.json_response({
+            'success': True,
+            'objects': detected_objects
+        })
+
+    def perform_detection(self):
         """
-        Service callback that triggers object detection and returns 3D positions.
+        Performs object detection and returns detected objects as a list of dicts.
+        Returns None if required data is missing.
         """
-        self.get_logger().info("Detection service called")
+        self.get_logger().info("Performing detection...")
 
         # Check if we have all required data
         if self.latest_color_image is None:
             self.get_logger().warning("No color image available yet")
-            return response
+            return None
         
         # Check for depth data based on mode
         if self.use_disparity and self.latest_disparity_image is None:
             self.get_logger().warning("No disparity image available yet (SIM mode)")
-            return response
+            return None
         elif not self.use_disparity and self.latest_depth_image is None:
             self.get_logger().warning("No depth image available yet (HARDWARE mode)")
-            return response
+            return None
         
         # Check if camera model is initialized
         if self.latest_camera_info is None or not self.camera_model_initialized:
             self.get_logger().warning("Camera info not available or camera model not initialized")
-            return response
+            return None
 
         try:
             # Convert ROS Image to OpenCV format
@@ -216,7 +274,7 @@ class YOLOPerceptionNode(Node):
             results = self.yolo_model(cv_image, conf=self.confidence_threshold, verbose=False)
             
             # Process detections
-            sensed_objects = []
+            detected_objects = []
             detection_count = 0
             total_detections = 0
             
@@ -246,11 +304,17 @@ class YOLOPerceptionNode(Node):
                     map_point = self.pixel_to_map_coords(cx, cy)
                     
                     if map_point is not None:
-                        # Create SensedObject message
-                        sensed_obj = SensedObject()
-                        sensed_obj.class_name = class_name
-                        sensed_obj.map_coords = map_point
-                        sensed_objects.append(sensed_obj)
+                        # Create dict representation of detected object
+                        obj_dict = {
+                            'class_name': class_name,
+                            'confidence': confidence,
+                            'map_coords': {
+                                'x': float(map_point.x),
+                                'y': float(map_point.y),
+                                'z': float(map_point.z)
+                            }
+                        }
+                        detected_objects.append(obj_dict)
                         detection_count += 1
                         
                         self.get_logger().info(
@@ -259,17 +323,17 @@ class YOLOPerceptionNode(Node):
                     else:
                         self.get_logger().warning(f"Could not compute 3D position for {class_name}")
             
-            response.sensed_objects = sensed_objects
             self.get_logger().info(f"Detection complete: {detection_count} objects with valid 3D positions")
+            return detected_objects
             
         except CvBridgeError as e:
             self.get_logger().error(f"CV Bridge error: {str(e)}")
+            return None
         except Exception as e:
             self.get_logger().error(f"Error during detection: {str(e)}")
             import traceback
             self.get_logger().error(traceback.format_exc())
-
-        return response
+            return None
 
     def pixel_to_map_coords(self, pixel_x: int, pixel_y: int) -> Point:
         """

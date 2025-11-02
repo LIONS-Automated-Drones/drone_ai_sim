@@ -1,17 +1,11 @@
 import asyncio
 import time
+import os
+import aiohttp
 from langchain.tools import BaseTool
 from drone_service import DroneService
 from utils import get_bearing_and_move, get_cardinal_and_move
 from mission_log import mission_log
-
-# Import ROS client (will be initialized on first use)
-try:
-    from ros_client import get_ros_node
-    ROS_AVAILABLE = True
-except ImportError:
-    ROS_AVAILABLE = False
-    mission_log("Warning: ROS client not available. Sense objects tool will be disabled.")
 
 # Create a single instance of our drone interface
 drone_service = DroneService()
@@ -202,80 +196,61 @@ class SenseObjectsTool(BaseTool):
     name: str = "sense_objects"
     description: str = "Uses the drone's camera and YOLO object detection to identify objects in view and store their 3D locations in memory. Call this when you want to know 'what do you see?'"
 
-    def _run(self, *args, **kwargs) -> str:
+    def _run(self, yolo_ip: str = None, *args, **kwargs) -> str:
         raise NotImplementedError("This tool does not support synchronous execution.")
 
-    async def _arun(self, *args, **kwargs) -> str:
-        """Triggers object detection and returns detected objects with their 3D positions"""
+    async def _arun(self, yolo_ip: str = None, *args, **kwargs) -> str:
+        """Triggers object detection and returns detected objects with their 3D positions via HTTP"""
         print("--- EXECUTING TOOL: Sensing objects... ---")
         
-        if not ROS_AVAILABLE:
-            return "Error: ROS client not available. Cannot sense objects."
+        # Get YOLO server IP from parameter or environment variable
+        if yolo_ip is None:
+            yolo_ip = os.environ.get('YOLO_SERVER_IP', 'localhost')
+        
+        yolo_url = f"http://{yolo_ip}:5444/detect"
+        mission_log(f"--- Connecting to YOLO server at {yolo_url}")
         
         try:
-            # Get the ROS node (starts thread if needed, sets up environment)
-            node = get_ros_node()
+            # Make HTTP POST request to the YOLO detection endpoint
+            timeout = aiohttp.ClientTimeout(total=20.0)  # YOLO can take a few seconds
             
-            # Import the service type (environment already configured in ROS client thread)
-            from ares_interfaces.srv import DetectObjects
-            
-            # Create service client
-            mission_log("--- Creating service client for object detection...")
-            client = node.create_client(DetectObjects, 'trigger_detection')
-            
-            # Wait for service to be available (with timeout) - use asyncio.to_thread to avoid blocking
-            mission_log("--- Waiting for object detection service to be available...")
-            timeout_sec = 10.0
-            service_available = await asyncio.to_thread(client.wait_for_service, timeout_sec=timeout_sec)
-            
-            if not service_available:
-                return f"Error: Object detection service not available after {timeout_sec}s. Is the yolo_perception_node running?"
-            
-            mission_log("--- Calling object detection service...")
-            
-            # Create request
-            request = DetectObjects.Request()
-            request.trigger = True
-            
-            # Call service and wait for result in a thread-safe way
-            # The ROS node is already spinning in its own thread, so the future will complete automatically
-            def call_service_sync():
-                """Synchronous wrapper to call the service and wait for result."""
-                future = client.call_async(request)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                mission_log("--- Sending detection request...")
                 
-                # Wait for the future to complete with a timeout
-                # The ROS node thread will process the response automatically
-                max_wait_time = 15.0  # YOLO can take a few seconds
-                start_time = time.time()
-                
-                while not future.done() and (time.time() - start_time) < max_wait_time:
-                    time.sleep(0.1)
-                
-                if not future.done():
-                    mission_log("--- Service call timed out")
-                    return None  # Timeout
-                
-                return future.result()
+                try:
+                    async with session.post(yolo_url) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            return f"Error: YOLO server returned status {response.status}: {error_text}"
+                        
+                        data = await response.json()
+                        
+                except aiohttp.ClientConnectorError:
+                    return f"Error: Could not connect to YOLO server at {yolo_url}. Is the yolo_perception_node running?"
+                except asyncio.TimeoutError:
+                    return "Error: Request to YOLO server timed out after 20 seconds."
             
-            mission_log("--- Waiting for object detection to complete...")
-            response = await asyncio.to_thread(call_service_sync)
+            # Check response
+            if not data.get('success', False):
+                error = data.get('error', 'Unknown error')
+                return f"Error: Object detection failed: {error}"
             
-            if response is None:
-                return "Error: Object detection service timed out after 15 seconds."
+            objects = data.get('objects', [])
             
-            if not response.sensed_objects:
+            if not objects:
                 mission_log("--- No objects detected")
                 return "I looked around but didn't detect any recognizable objects in the current view."
             
             # Format the detected objects
-            mission_log(f"--- Detected {len(response.sensed_objects)} objects")
-            result_lines = [f"Detected {len(response.sensed_objects)} object(s):"]
+            mission_log(f"--- Detected {len(objects)} objects")
+            result_lines = [f"Detected {len(objects)} object(s):"]
             
             # Track objects by class for unique IDs
             class_counts = {}
             
-            for obj in response.sensed_objects:
-                class_name = obj.class_name
+            for obj in objects:
+                class_name = obj['class_name']
+                map_coords = obj['map_coords']
                 
                 # Generate unique ID
                 if class_name not in class_counts:
@@ -284,7 +259,7 @@ class SenseObjectsTool(BaseTool):
                 object_id = f"{class_name}_{class_counts[class_name]}"
                 
                 # Format coordinates
-                x, y, z = obj.map_coords.x, obj.map_coords.y, obj.map_coords.z
+                x, y, z = map_coords['x'], map_coords['y'], map_coords['z']
                 
                 result_lines.append(
                     f"  - {object_id}: {class_name} at map coordinates ({x:.2f}, {y:.2f}, {z:.2f}) meters"
