@@ -76,9 +76,6 @@ class DroneService:
             mission_log("--- Drone not connected. Cannot take off.")
             return False
         
-        if await is_in_air():
-            mission_log("--- Drone is in air. Already in air.")
-            return True
         # Store takeoff position for relative calculations
         position = await anext(self.drone.telemetry.position())
         self.takeoff_position = {
