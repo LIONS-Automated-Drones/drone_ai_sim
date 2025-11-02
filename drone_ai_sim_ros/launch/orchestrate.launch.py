@@ -1,8 +1,11 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.conditions import IfCondition, UnlessCondition
+from ament_index_python.packages import get_package_share_directory
+import os
 
 def generate_launch_description():
     """
@@ -150,23 +153,23 @@ def generate_launch_description():
         # ==================== HARDWARE-ONLY NODES ====================
         elif mode == 'hardware':
             # ZED 2i Camera Wrapper (HARDWARE ONLY)
-            nodes.append(Node(
-                package='zed_wrapper',
-                executable='zed_wrapper',
-                name='zed_node',
-                output='screen',
-                parameters=[{
+            # Use the official ZED launch file as an IncludeLaunchDescription
+            zed_wrapper_dir = get_package_share_directory('zed_wrapper')
+            zed_launch_path = os.path.join(zed_wrapper_dir, 'launch', 'zed_camera.launch.py')
+            
+            nodes.append(IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(zed_launch_path),
+                launch_arguments={
                     'camera_model': 'zed2i',
-                    'publish_tf': True,
-                    'publish_map_tf': False,  # Let rtabmap handle mapping
-                    'general.camera_name': 'zed2i',
-                    'general.grab_resolution': 'HD720',  # HD720, HD1080, or HD2K
-                    'general.grab_frame_rate': 30,
-                    'depth.depth_mode': 'NEURAL',  # ZED 2i neural depth engine
-                    'depth.confidence': 50,
-                    'depth.texture_confidence': 100,
-                    'pos_tracking.pos_tracking_enabled': False,  # rtabmap handles odometry
-                }]
+                    'camera_name': 'zed2i',
+                    'node_name': 'zed_node',
+                    'publish_urdf': 'true',
+                    'publish_tf': 'true',
+                    'publish_map_tf': 'false',  # Let rtabmap handle mapping
+                    'publish_imu_tf': 'false',
+                    'use_sim_time': 'false',
+                    'camera_flip' : 'true'
+                }.items()
             ))
             
             # TF from base_link to ZED camera (adjust based on physical mounting)
@@ -228,8 +231,8 @@ def generate_launch_description():
                 'imu': '/imu/data',
             },
             'hardware': {
-                'left': '/zed2i/zed_node/left/image_rect_gray',
-                'right': '/zed2i/zed_node/right/image_rect_gray',
+                'left': '/zed2i/zed_node/left/image_rect_color',
+                'right': '/zed2i/zed_node/right/image_rect_color',
                 'left_info': '/zed2i/zed_node/left/camera_info',
                 'right_info': '/zed2i/zed_node/right/camera_info',
                 'imu': '/zed2i/zed_node/imu/data',
