@@ -91,10 +91,10 @@ class YOLOPerceptionNode(Node):
             self.camera_frame = "stereo_left_optical_frame"
             self.use_disparity = True  # Sim uses disparity images
         else:  # hardware mode
-            color_topic = '/zed2i/zed_node/left/image_rect_color'
+            color_topic = '/zed2i/zed_node/left/color/rect/image'
             depth_topic = '/zed2i/zed_node/depth/depth_registered'
-            camera_info_topic = '/zed2i/zed_node/left/camera_info'
-            self.camera_frame = "zed2i_left_camera_optical_frame"+
+            camera_info_topic = '/zed2i/zed_node/left/color/rect/camera_info'
+            self.camera_frame = "zed2i_left_camera_optical_frame"
             self.use_disparity = False  # ZED uses direct depth images
 
         # QoS profile for sensor data
