@@ -195,7 +195,7 @@ class YOLOPerceptionNode(Node):
             asyncio.set_event_loop(loop)
             
             self.app = web.Application()
-            self.app.router.add_post('/detect', self.handle_detect)
+            self.app.router.add_get('/detect', self.handle_detect)
             self.app.router.add_get('/health', self.handle_health)
             
             self.runner = web.AppRunner(self.app)

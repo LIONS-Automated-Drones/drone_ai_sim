@@ -22,7 +22,7 @@ def generate_launch_description():
     # Declare launch arguments
     mode_arg = DeclareLaunchArgument(
         'mode',
-        default_value='sim',
+        default_value='hardware',
         description='Operating mode: "sim" for Gazebo simulation or "hardware" for ZED 2i camera'
     )
     
@@ -241,65 +241,65 @@ def generate_launch_description():
         
         topics = rtabmap_image_topics[mode]
         
-        nodes.append(Node(
-            package="rtabmap_odom",
-            executable="stereo_odometry",
-            name="stereo_odometry",
-            output="screen",
-            parameters=[{
-                "frame_id": "base_link",
-                "odom_frame_id": "odom_stereo",
-                "approx_sync": True,
-                "approx_sync_max_interval": 0.01,
-                "subscribe_imu": True,
-                "Vis/UseIMU": True,
-                "Vis/IMUGravity": True,
-                "queue_size": 30,
-                "use_sim_time": use_sim_time,
-                "publish_tf": True
-            }],
-            remappings=[
-                ("left/image_rect", topics['left']),
-                ("right/image_rect", topics['right']),
-                ("left/camera_info", topics['left_info']),
-                ("right/camera_info", topics['right_info']),
-                ("imu", topics['imu']),
-                ("odom", "/stereo_odometry/odom"),
-            ],
-        ))
+        # nodes.append(Node(
+        #     package="rtabmap_odom",
+        #     executable="stereo_odometry",
+        #     name="stereo_odometry",
+        #     output="screen",
+        #     parameters=[{
+        #         "frame_id": "base_link",
+        #         "odom_frame_id": "odom_stereo",
+        #         "approx_sync": True,
+        #         "approx_sync_max_interval": 0.01,
+        #         "subscribe_imu": True,
+        #         "Vis/UseIMU": True,
+        #         "Vis/IMUGravity": True,
+        #         "queue_size": 30,
+        #         "use_sim_time": use_sim_time,
+        #         "publish_tf": True
+        #     }],
+        #     remappings=[
+        #         ("left/image_rect", topics['left']),
+        #         ("right/image_rect", topics['right']),
+        #         ("left/camera_info", topics['left_info']),
+        #         ("right/camera_info", topics['right_info']),
+        #         ("imu", topics['imu']),
+        #         ("odom", "/stereo_odometry/odom"),
+        #     ],
+        # ))
         
-        # RTAB-Map SLAM (BOTH MODES)
-        nodes.append(Node(
-            package="rtabmap_slam",
-            executable="rtabmap",
-            name="rtabmap",
-            output="screen",
-            parameters=[{
-                "frame_id": "base_link",
-                "subscribe_stereo": True,
-                "approx_sync": True,
-                "subscribe_odom": True,
-                "subscribe_imu": True,
-                "delete_db_on_start": True,
-                "publish_tf": True,
-                "publish_odom_tf": False,
-                "publish_trajectory": True,
-                "Vis/UseIMU": True,
-                "Vis/IMUGravity": True,
-                "Optimizer/GravitySigma": "0.1",
-                "stereo_optical_frame_id": "stereo_left_optical_frame" if mode == 'sim' else "zed2i_left_camera_optical_frame",
-                "stereo_optical_frame_id_right": "stereo_right_optical_frame" if mode == 'sim' else "zed2i_right_camera_optical_frame",
-                "use_sim_time": use_sim_time
-            }],
-            remappings=[
-                ("odom", "/stereo_odometry/odom"),
-                ("imu", topics['imu']),
-                ("left/image_rect", topics['left']),
-                ("right/image_rect", topics['right']),
-                ("left/camera_info", topics['left_info']),
-                ("right/camera_info", topics['right_info']),
-            ],
-        ))
+        # # RTAB-Map SLAM (BOTH MODES)
+        # nodes.append(Node(
+        #     package="rtabmap_slam",
+        #     executable="rtabmap",
+        #     name="rtabmap",
+        #     output="screen",
+        #     parameters=[{
+        #         "frame_id": "base_link",
+        #         "subscribe_stereo": True,
+        #         "approx_sync": True,
+        #         "subscribe_odom": True,
+        #         "subscribe_imu": True,
+        #         "delete_db_on_start": True,
+        #         "publish_tf": True,
+        #         "publish_odom_tf": False,
+        #         "publish_trajectory": True,
+        #         "Vis/UseIMU": True,
+        #         "Vis/IMUGravity": True,
+        #         "Optimizer/GravitySigma": "0.1",
+        #         "stereo_optical_frame_id": "stereo_left_optical_frame" if mode == 'sim' else "zed2i_left_camera_optical_frame",
+        #         "stereo_optical_frame_id_right": "stereo_right_optical_frame" if mode == 'sim' else "zed2i_right_camera_optical_frame",
+        #         "use_sim_time": use_sim_time
+        #     }],
+        #     remappings=[
+        #         ("odom", "/stereo_odometry/odom"),
+        #         ("imu", topics['imu']),
+        #         ("left/image_rect", topics['left']),
+        #         ("right/image_rect", topics['right']),
+        #         ("left/camera_info", topics['left_info']),
+        #         ("right/camera_info", topics['right_info']),
+        #     ],
+        # ))
         
         # YOLO Perception Node (BOTH MODES - configured via parameters)
         nodes.append(Node(
@@ -329,18 +329,18 @@ def generate_launch_description():
         ))
         
         # PointCloud WebSocket Bridge (BOTH MODES)
-        nodes.append(Node(
-            package="drone_ai_sim_ros",
-            executable="pointcloud_websocket_bridge",
-            name="pointcloud_websocket_bridge",
-            output="screen",
-            parameters=[{
-                "use_sim_time": use_sim_time,
-                "topic": "/cloud_map",
-                "port": 9000,
-                "host": "0.0.0.0"
-            }]
-        ))
+        # nodes.append(Node(
+        #     package="drone_ai_sim_ros",
+        #     executable="pointcloud_websocket_bridge",
+        #     name="pointcloud_websocket_bridge",
+        #     output="screen",
+        #     parameters=[{
+        #         "use_sim_time": use_sim_time,
+        #         "topic": "/cloud_map",
+        #         "port": 9000,
+        #         "host": "0.0.0.0"
+        #     }]
+        # ))
         
         return nodes
     

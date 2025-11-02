@@ -48,9 +48,19 @@ pip install --break-system-packages --no-deps "ultralytics>=8.0.0"
 pip install --break-system-packages pillow pyyaml requests scipy tqdm psutil py-cpuinfo thop
 ```
 
+```bash
+ros2 run drone_ai_sim_ros yolo_perception_node --ros-args use_sim_time:=true mode:="hardware" model_name:="yolov8n.pt" confidence_threshold:=0.5 target_frame:="base_link"
+
+```
+
 Zed2i
 ```bash
 ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i camera_name:=zed2i node_name:=zed_node publish_urdf:=true publish_tf:=true publish_map_tf:=false publish_imu_tf:=false use_sim_time:=false camera_flip:=true
+```
+
+Web Video Server
+```
+ros2 run web_video_server web_video_server --ros-args -p address:="0.0.0.0" -p port:=8080
 ```
 
 
