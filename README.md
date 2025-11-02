@@ -48,6 +48,12 @@ pip install --break-system-packages --no-deps "ultralytics>=8.0.0"
 pip install --break-system-packages pillow pyyaml requests scipy tqdm psutil py-cpuinfo thop
 ```
 
+Zed2i
+```bash
+ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i camera_name:=zed2i node_name:=zed_node publish_urdf:=true publish_tf:=true publish_map_tf:=false publish_imu_tf:=false use_sim_time:=false camera_flip:=true
+```
+
+
 #### Running the project
 ```bash
 # Terminal 1 - Start PX4 Gazebo simulation
