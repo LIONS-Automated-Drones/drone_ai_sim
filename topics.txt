@@ -66,3 +66,10 @@ jamilr@jamilr-desktop:~$ ros2 topic list
 /zed2i/zed_node/stereo/color/rect/image/compressed
 /zed2i/zed_node/stereo/color/rect/image/compressedDepth
 /zed2i/zed_node/stereo/color/rect/image/theora
+
+
+jamilr@jamilr-desktop:~$ ros2 run tf2_tools view_frames
+[INFO] [1762110979.055435096] [view_frames]: Listening to tf data for 5.0 seconds...
+[INFO] [1762110984.097633479] [view_frames]: Generating graph in frames.pdf file...
+[INFO] [1762110984.106938427] [view_frames]: Result:tf2_msgs.srv.FrameGraph_Response(frame_yaml="zed2i_camera_link: \n  parent: 'odom'\n  broadcaster: 'default_authority'\n  rate: 14.132\n  most_recent_transform: 1762110983.895204\n  oldest_transform: 1762110978.871224\n  buffer_length: 5.024\nzed2i_camera_center: \n  parent: 'zed2i_camera_link'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_left_camera_frame: \n  parent: 'zed2i_camera_center'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_left_camera_optical_frame: \n  parent: 'zed2i_left_camera_frame'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_right_camera_frame: \n  parent: 'zed2i_camera_center'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_right_camera_optical_frame: \n  parent: 'zed2i_right_camera_frame'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\n")
+
