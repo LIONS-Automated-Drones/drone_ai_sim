@@ -73,3 +73,110 @@ jamilr@jamilr-desktop:~$ ros2 run tf2_tools view_frames
 [INFO] [1762110984.097633479] [view_frames]: Generating graph in frames.pdf file...
 [INFO] [1762110984.106938427] [view_frames]: Result:tf2_msgs.srv.FrameGraph_Response(frame_yaml="zed2i_camera_link: \n  parent: 'odom'\n  broadcaster: 'default_authority'\n  rate: 14.132\n  most_recent_transform: 1762110983.895204\n  oldest_transform: 1762110978.871224\n  buffer_length: 5.024\nzed2i_camera_center: \n  parent: 'zed2i_camera_link'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_left_camera_frame: \n  parent: 'zed2i_camera_center'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_left_camera_optical_frame: \n  parent: 'zed2i_left_camera_frame'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_right_camera_frame: \n  parent: 'zed2i_camera_center'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_right_camera_optical_frame: \n  parent: 'zed2i_right_camera_frame'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\n")
 
+
+
+jamilr@jamilr-desktop:~$ ros2 run tf2_tools view_frames
+[INFO] [1762112218.245460282] [view_frames]: Listening to tf data for 5.0 seconds...
+[INFO] [1762112223.255726723] [view_frames]: Generating graph in frames.pdf file...
+[INFO] [1762112223.265059739] [view_frames]: Result:tf2_msgs.srv.FrameGraph_Response(frame_yaml="zed2i_camera_link: \n  parent: 'odom'\n  broadcaster: 'default_authority'\n  rate: 15.151\n  most_recent_transform: 1762112223.142694\n  oldest_transform: 1762112218.654675\n  buffer_length: 4.488\nodom: \n  parent: 'map'\n  broadcaster: 'default_authority'\n  rate: 20.222\n  most_recent_transform: 1762112223.352405\n  oldest_transform: 1762112218.852409\n  buffer_length: 4.500\nzed2i_camera_center: \n  parent: 'zed2i_camera_link'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_left_camera_frame: \n  parent: 'zed2i_camera_center'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_left_camera_optical_frame: \n  parent: 'zed2i_left_camera_frame'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_right_camera_frame: \n  parent: 'zed2i_camera_center'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\nzed2i_right_camera_optical_frame: \n  parent: 'zed2i_right_camera_frame'\n  broadcaster: 'default_authority'\n  rate: 10000.000\n  most_recent_transform: 0.000000\n  oldest_transform: 0.000000\n  buffer_length: 0.000\n")
+jamilr@jamilr-desktop:~$ ros2 topic echo /tf_static
+transforms:
+- header:
+    stamp:
+      sec: 1762112179
+      nanosec: 766629755
+    frame_id: base_link
+  child_frame_id: zed2i_camera_link
+  transform:
+    translation:
+      x: 0.1016
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+---
+transforms:
+- header:
+    stamp:
+      sec: 1762112179
+      nanosec: 785586477
+    frame_id: zed2i_camera_link
+  child_frame_id: zed2i_camera_center
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.015
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1762112179
+      nanosec: 785586477
+    frame_id: zed2i_camera_center
+  child_frame_id: zed2i_left_camera_frame
+  transform:
+    translation:
+      x: -0.01
+      y: 0.06
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1762112179
+      nanosec: 785586477
+    frame_id: zed2i_left_camera_frame
+  child_frame_id: zed2i_left_camera_optical_frame
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.5
+      y: -0.4999999999999999
+      z: 0.5
+      w: -0.5000000000000001
+- header:
+    stamp:
+      sec: 1762112179
+      nanosec: 785586477
+    frame_id: zed2i_camera_center
+  child_frame_id: zed2i_right_camera_frame
+  transform:
+    translation:
+      x: -0.01
+      y: -0.06
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1762112179
+      nanosec: 785586477
+    frame_id: zed2i_right_camera_frame
+  child_frame_id: zed2i_right_camera_optical_frame
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.5
+      y: -0.4999999999999999
+      z: 0.5
+      w: -0.5000000000000001
+---
