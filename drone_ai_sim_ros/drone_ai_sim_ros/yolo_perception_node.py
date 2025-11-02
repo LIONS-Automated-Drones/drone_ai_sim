@@ -51,10 +51,12 @@ class YOLOPerceptionNode(Node):
         self.declare_parameter('model_name', 'yolov8n.pt')  # Nano model for speed
         self.declare_parameter('confidence_threshold', 0.5)
         self.declare_parameter('target_frame', 'map')  # Frame to transform detections to
+        self.declare_parameter('mode', 'sim')  # 'sim' for Gazebo or 'hardware' for ZED 2i
         
         model_name = self.get_parameter('model_name').get_parameter_value().string_value
         self.confidence_threshold = self.get_parameter('confidence_threshold').get_parameter_value().double_value
         self.target_frame = self.get_parameter('target_frame').get_parameter_value().string_value
+        self.mode = self.get_parameter('mode').get_parameter_value().string_value
 
         # Initialize YOLO model
         self.get_logger().info(f"Loading YOLO model: {model_name}")
@@ -73,12 +75,26 @@ class YOLOPerceptionNode(Node):
 
         # Storage for latest messages
         self.latest_color_image = None
-        self.latest_disparity_image = None
+        self.latest_disparity_image = None  # Used in sim mode
+        self.latest_depth_image = None      # Used in hardware mode
         self.latest_camera_info = None
-        self.camera_frame = "stereo_left_optical_frame"  # Use the TF frame, not Gazebo frame
-        self.camera_model_initialized = False  # Track if camera model has been initialized
+        self.camera_model_initialized = False
+        
+        # Configure topic names and camera frame based on mode
+        if self.mode == 'sim':
+            color_topic = '/left/image_rect_color'
+            depth_topic = '/disparity'
+            camera_info_topic = '/stereo/left/camera_info'
+            self.camera_frame = "stereo_left_optical_frame"
+            self.use_disparity = True  # Sim uses disparity images
+        else:  # hardware mode
+            color_topic = '/zed2i/zed_node/left/image_rect_color'
+            depth_topic = '/zed2i/zed_node/depth/depth_registered'
+            camera_info_topic = '/zed2i/zed_node/left/camera_info'
+            self.camera_frame = "zed2i_left_camera_optical_frame"
+            self.use_disparity = False  # ZED uses direct depth images
 
-        # QoS profile for sensor data (required for camera topics)
+        # QoS profile for sensor data
         from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
         sensor_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -87,28 +103,39 @@ class YOLOPerceptionNode(Node):
             depth=10
         )
 
-        # Subscribers with sensor_data QoS
+        # Color image subscriber (common)
         self.color_sub = self.create_subscription(
             Image,
-            '/left/image_rect_color',
+            color_topic,
             self.color_callback,
             sensor_qos
         )
         
-        self.disparity_sub = self.create_subscription(
-            DisparityImage,
-            '/disparity',
-            self.disparity_callback,
-            sensor_qos
-        )
+        # Depth/Disparity subscriber (mode-specific)
+        if self.use_disparity:
+            self.disparity_sub = self.create_subscription(
+                DisparityImage,
+                depth_topic,
+                self.disparity_callback,
+                sensor_qos
+            )
+        else:
+            self.depth_sub = self.create_subscription(
+                Image,
+                depth_topic,
+                self.depth_callback,
+                sensor_qos
+            )
         
+        # Camera info subscriber
         self.camera_info_sub = self.create_subscription(
             CameraInfo,
-            '/stereo/left/camera_info',
+            camera_info_topic,
             self.camera_info_callback,
             sensor_qos
         )
         
+        self.get_logger().info(f"Operating in {self.mode.upper()} mode")
         self.get_logger().info("Subscribed with sensor_data QoS profile")
 
         # Service
@@ -119,7 +146,9 @@ class YOLOPerceptionNode(Node):
         )
 
         self.get_logger().info("YOLO Perception Node initialized")
-        self.get_logger().info("Subscribed to: /left/image_rect_color, /disparity, /stereo/left/camera_info")
+        self.get_logger().info(f"Color topic: {color_topic}")
+        self.get_logger().info(f"Depth topic: {depth_topic}")
+        self.get_logger().info(f"Camera info topic: {camera_info_topic}")
         self.get_logger().info("Service available: trigger_detection")
         self.get_logger().info(f"Camera frame: {self.camera_frame}")
         self.get_logger().info(f"Target frame: {self.target_frame}")
@@ -129,8 +158,12 @@ class YOLOPerceptionNode(Node):
         self.latest_color_image = msg
 
     def disparity_callback(self, msg: DisparityImage):
-        """Store the latest disparity image."""
+        """Store the latest disparity image (SIM mode only)."""
         self.latest_disparity_image = msg
+    
+    def depth_callback(self, msg: Image):
+        """Store the latest depth image (HARDWARE mode only)."""
+        self.latest_depth_image = msg
 
     def camera_info_callback(self, msg: CameraInfo):
         """Store the latest camera info and update camera model."""
@@ -161,8 +194,12 @@ class YOLOPerceptionNode(Node):
             self.get_logger().warning("No color image available yet")
             return response
         
-        if self.latest_disparity_image is None:
-            self.get_logger().warning("No disparity image available yet")
+        # Check for depth data based on mode
+        if self.use_disparity and self.latest_disparity_image is None:
+            self.get_logger().warning("No disparity image available yet (SIM mode)")
+            return response
+        elif not self.use_disparity and self.latest_depth_image is None:
+            self.get_logger().warning("No depth image available yet (HARDWARE mode)")
             return response
         
         # Check if camera model is initialized
@@ -236,7 +273,8 @@ class YOLOPerceptionNode(Node):
 
     def pixel_to_map_coords(self, pixel_x: int, pixel_y: int) -> Point:
         """
-        Convert a 2D pixel coordinate to 3D map coordinates using disparity and TF2.
+        Convert a 2D pixel coordinate to 3D map coordinates using depth/disparity and TF2.
+        Handles both simulation (disparity) and hardware (depth) modes.
         
         Args:
             pixel_x: X coordinate in the image
@@ -246,42 +284,68 @@ class YOLOPerceptionNode(Node):
             Point in the map frame, or None if conversion fails
         """
         try:
-            # Get disparity image data
-            disparity_cv = self.bridge.imgmsg_to_cv2(
-                self.latest_disparity_image.image,
-                desired_encoding='32FC1'
-            )
-            
-            # Ensure pixel coordinates are within image bounds
-            height, width = disparity_cv.shape
-            pixel_x = max(0, min(pixel_x, width - 1))
-            pixel_y = max(0, min(pixel_y, height - 1))
-            
-            # Get disparity value at pixel
-            disparity = disparity_cv[pixel_y, pixel_x]
-            
-            # Check for invalid disparity
-            if np.isnan(disparity) or disparity <= 0:
-                self.get_logger().warning(
-                    f"Invalid disparity at ({pixel_x}, {pixel_y}): {disparity} "
-                    f"(NaN={np.isnan(disparity)}, <=0={disparity <= 0 if not np.isnan(disparity) else 'N/A'})"
+            # Get depth based on mode
+            if self.use_disparity:
+                # SIM MODE: Calculate depth from disparity
+                disparity_cv = self.bridge.imgmsg_to_cv2(
+                    self.latest_disparity_image.image,
+                    desired_encoding='32FC1'
                 )
-                return None
-            
-            # Calculate depth from disparity
-            # Disparity formula: d = f * T / Z  =>  Z = f * T / d
-            focal_length = self.latest_disparity_image.f  # Focal length in pixels
-            baseline = self.latest_disparity_image.t  # Baseline in meters
-            depth = (focal_length * baseline) / disparity
-            
-            self.get_logger().info(
-                f"Depth calculation: f={focal_length:.2f}px, baseline={baseline:.3f}m, "
-                f"disparity={disparity:.2f}px -> depth={depth:.2f}m"
-            )
+                
+                # Ensure pixel coordinates are within image bounds
+                height, width = disparity_cv.shape
+                pixel_x = max(0, min(pixel_x, width - 1))
+                pixel_y = max(0, min(pixel_y, height - 1))
+                
+                # Get disparity value at pixel
+                disparity = disparity_cv[pixel_y, pixel_x]
+                
+                # Check for invalid disparity
+                if np.isnan(disparity) or disparity <= 0:
+                    self.get_logger().warning(
+                        f"Invalid disparity at ({pixel_x}, {pixel_y}): {disparity} "
+                        f"(NaN={np.isnan(disparity)}, <=0={disparity <= 0 if not np.isnan(disparity) else 'N/A'})"
+                    )
+                    return None
+                
+                # Calculate depth from disparity
+                # Disparity formula: d = f * T / Z  =>  Z = f * T / d
+                focal_length = self.latest_disparity_image.f  # Focal length in pixels
+                baseline = self.latest_disparity_image.t  # Baseline in meters
+                depth = (focal_length * baseline) / disparity
+                
+                self.get_logger().info(
+                    f"[SIM] Depth from disparity: f={focal_length:.2f}px, baseline={baseline:.3f}m, "
+                    f"disparity={disparity:.2f}px -> depth={depth:.2f}m"
+                )
+            else:
+                # HARDWARE MODE: Use direct depth from ZED
+                depth_cv = self.bridge.imgmsg_to_cv2(
+                    self.latest_depth_image,
+                    desired_encoding='32FC1'
+                )
+                
+                # Ensure pixel coordinates are within image bounds
+                height, width = depth_cv.shape
+                pixel_x = max(0, min(pixel_x, width - 1))
+                pixel_y = max(0, min(pixel_y, height - 1))
+                
+                # Get depth value at pixel (ZED depth is already in meters)
+                depth = depth_cv[pixel_y, pixel_x]
+                
+                # Check for invalid depth
+                if np.isnan(depth) or depth <= 0:
+                    self.get_logger().warning(
+                        f"Invalid depth at ({pixel_x}, {pixel_y}): {depth} "
+                        f"(NaN={np.isnan(depth)}, <=0={depth <= 0 if not np.isnan(depth) else 'N/A'})"
+                    )
+                    return None
+                
+                self.get_logger().info(f"[HARDWARE] Depth from ZED: {depth:.2f}m at pixel ({pixel_x}, {pixel_y})")
             
             # Check for reasonable depth (e.g., between 0.1m and 50m)
             if depth < 0.1 or depth > 50.0:
-                self.get_logger().warning(f"Unreasonable depth calculated: {depth:.2f}m (must be 0.1-50m)")
+                self.get_logger().warning(f"Unreasonable depth: {depth:.2f}m (must be 0.1-50m)")
                 return None
             
             # Project pixel to 3D ray in camera frame
