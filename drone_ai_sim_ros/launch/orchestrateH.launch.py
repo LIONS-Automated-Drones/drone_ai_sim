@@ -168,18 +168,8 @@ def generate_launch_description():
                     'publish_map_tf': 'false',  # Let rtabmap handle mapping
                     'publish_imu_tf': 'false',
                     'use_sim_time': 'false',
-                    'base_frame': 'base_link', 
                     'camera_flip' : 'true'
                 }.items()
-            ))
-            
-            # TF from base_link to ZED camera (adjust based on physical mounting)
-            nodes.append(Node(
-                package="tf2_ros",
-                executable="static_transform_publisher",
-                name="base_to_zed_mount",
-                arguments=["0.1016", "0", "0", "0", "0", "0", "base_link", "zed2i_camera_link"],
-                parameters=[{"use_sim_time": use_sim_time}]
             ))
         
         # ==================== COMMON NODES (BOTH MODES) ====================
@@ -246,7 +236,7 @@ def generate_launch_description():
             output="screen",
             parameters=[{
                 # Frames
-                "frame_id": "base_link",
+                "frame_id": "zed2i_camera_link",
                 "odom_frame_id": "odom",
                 "map_frame_id": "map",
 
@@ -263,14 +253,13 @@ def generate_launch_description():
                 # Use IMU for visual alignment (gravity)
                 "Vis/UseIMU": True,
                 "Vis/IMUGravity": True,
-                "Optimizer/GravitySigma": "0.1",
 
                 # TF policy
                 "publish_tf": True,           # RTAB-Map publishes map->odom
                 "publish_odom_tf": False,     # odom->base_link comes from ZED
 
                 # Housekeeping
-                "delete_db_on_start": False
+                "delete_db_on_start": True
             }],
             remappings=[
                 # Odometry (from ZED)
@@ -298,7 +287,7 @@ def generate_launch_description():
                 "mode": mode,  # Pass mode to the node
                 "model_name": "yolov8n.pt",
                 "confidence_threshold": 0.5,
-                "target_frame": "base_link"
+                "target_frame": "map"  # Transform detections to map frame for global localization
             }]
         ))
         
@@ -314,19 +303,19 @@ def generate_launch_description():
             }],
         ))
         
-        # PointCloud WebSocket Bridge (BOTH MODES)
-        # nodes.append(Node(
-        #     package="drone_ai_sim_ros",
-        #     executable="pointcloud_websocket_bridge",
-        #     name="pointcloud_websocket_bridge",
-        #     output="screen",
-        #     parameters=[{
-        #         "use_sim_time": use_sim_time,
-        #         "topic": "/cloud_map",
-        #         "port": 9000,
-        #         "host": "0.0.0.0"
-        #     }]
-        # ))
+        # PointCloud WebSocket Bridge
+        nodes.append(Node(
+            package="drone_ai_sim_ros",
+            executable="pointcloud_websocket_bridge",
+            name="pointcloud_websocket_bridge",
+            output="screen",
+            parameters=[{
+                "use_sim_time": use_sim_time,
+                "topic": "/cloud_map",
+                "port": 9000,
+                "host": "0.0.0.0"
+            }]
+        ))
         
         return nodes
     

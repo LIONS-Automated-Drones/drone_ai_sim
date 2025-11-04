@@ -55,7 +55,7 @@ ros2 run drone_ai_sim_ros yolo_perception_node --ros-args use_sim_time:=true mod
 
 Zed2i
 ```bash
-ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i camera_name:=zed2i node_name:=zed_node publish_urdf:=true publish_tf:=true publish_map_tf:=false publish_imu_tf:=false use_sim_time:=false camera_flip:=true
+ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i camera_name:=zed2i node_name:=zed_node publish_urdf:=true publish_tf:=true publish_map_tf:=false publish_imu_tf:=false use_sim_time:=false camera_flip:=true base_frame=base_link
 ```
 
 Web Video Server

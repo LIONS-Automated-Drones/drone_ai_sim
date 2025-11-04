@@ -1,0 +1,27 @@
+/**:
+  ros__parameters:
+    # Frames
+    frame_id: "zed2i_camera_link"
+    odom_frame_id: "odom"
+    map_frame_id: "map"
+
+    # Modalities
+    subscribe_depth: true     # RGB-D mode
+    subscribe_odom: true
+    subscribe_imu: true
+
+    # Sync/robustness
+    approx_sync: true
+    approx_sync_max_interval: 0.06
+    sync_queue_size: 30
+
+    # Use IMU for visual alignment (gravity)
+    Vis/UseIMU: true
+    Vis/IMUGravity: true
+
+    # TF policy
+    publish_tf: true          # RTAB-Map publishes map->odom
+    publish_odom_tf: false    # odom->base_link comes from ZED
+
+    # Housekeeping
+    delete_db_on_start: true
