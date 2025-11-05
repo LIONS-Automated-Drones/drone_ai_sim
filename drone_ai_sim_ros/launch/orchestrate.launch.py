@@ -281,7 +281,7 @@ def generate_launch_description():
                 "queue_size": 10,
                 "delete_db_on_start": True,
                 "Rtabmap/DetectionRate": "1.0",
-                "Rtabmap/CreateIntermediateNodes": "true",
+                "Rtabmap/CreateIntermediateNodes": "false",
                 "Rtabmap/StartNewMapOnLoopClosure": "false",
                 "Mem/IncrementalMemory": "true",
                 "Optimizer/Strategy": "1",             # g2o/ceres
@@ -291,7 +291,7 @@ def generate_launch_description():
                 "Reg/Force3DoF": "true",
                 "Reg/Strategy": "0",
                 "use_action_for_goal": False,
-                "map_always_update": False,
+                "map_always_update": True,
                 "map_empty_ray_tracing": True,
                 "map_cleanup": True,
                 "map_filter_angle": 30.0,
