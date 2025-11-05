@@ -16,10 +16,7 @@ def generate_launch_description():
                 "/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU",
                 "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
                 "/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock"
-            ],
-            remappings=[
-                ("/odom", "/stereo_odometry/odom"),  # bridge and remap to match rtabmap/nav2 expectation
-            ],
+            ]
         ),
         # Static TFs
         # Node(
