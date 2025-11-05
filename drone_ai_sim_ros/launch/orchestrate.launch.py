@@ -127,6 +127,16 @@ def generate_launch_description():
             }]
         ),
 
+        Node(
+            package="drone_ai_sim_ros",
+            executable="odom_tf_broadcaster",
+            name="odom_republisher",
+            output="screen",
+            parameters=[{
+                "use_sim_time": True
+            }]
+        ),
+
         # Image rectification
         Node(
             package="image_proc",
