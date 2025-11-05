@@ -11,6 +11,8 @@ from tools import get_tools, drone_service
 from graph import build_graph
 from mission_log import set_websocket_callback, mission_log
 from environment_settings import ENVIRONMENT_SETTINGS
+from utils import get_bearing_and_move
+
 # --- 1. Setup the Agent ---
 tools = get_tools()
 tool_names = [tool.name for tool in tools]
@@ -134,12 +136,38 @@ async def websocket_handler(websocket):
                 await drone_service.cancel()
                 if current_mission_task:
                     current_mission_task.cancel()
-
             # If there's a mission already running, reject new mission
             elif mission_running.is_set():
                 # Optionally cancel the previous mission or inform the client
                 print("Mission already running, cannot process command...")
                 await websocket.send("Please cancel the previous mission or wait for it to complete before sending additional mission commands.")
+            # Quick command to arm and take off without invoking any LLMs
+            elif msg == "armtakeoff":
+                print("Received ARMTAKEOFF signal from dashboard.")
+                print("Attempting to arm and take off...")
+                await drone_service.arm()
+                await drone_service.takeoff()
+            # If the move forward button is pressed on the dashboard, run the command directly
+            elif msg == "moveforward":
+                print("Received MOVEFORWARD signal from dashboard.")
+                print("Attempting to move 1 m forward...")
+                direction = "forward"
+                distance_m = 1
+                telemetry = await drone_service.get_telemetry()
+                if not telemetry:
+                    print("Failed to get current telemetry. Cannot move.")
+                    continue
+                new_lat, new_lon = get_bearing_and_move(
+                    telemetry["latitude_deg"],
+                    telemetry["longitude_deg"],
+                    telemetry["heading_deg"],
+                    direction,
+                    distance_m
+                )
+                success = await drone_service.goto_location(
+                    new_lat, new_lon, telemetry["absolute_altitude_m"], telemetry["heading_deg"]
+                )
+                print(f"Successfully moved {distance_m}m {direction}." if success else "Failed to move.")
             else:
                 # Start new mission as background task
                 print(f"Starting mission: {message}")
