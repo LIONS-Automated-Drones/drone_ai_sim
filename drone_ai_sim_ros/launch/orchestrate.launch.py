@@ -87,34 +87,9 @@ def generate_launch_description():
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            name="odom_to_baselink",
-            arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "odom_stereo"],
-        ),
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
             name="basefootprint_to_baselink",
             arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
         ),
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="map_to_odom_alias",
-            arguments=["0", "0", "0", "0", "0", "0", "map", "x500_0/odom"],
-        ),
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="odom_alias",
-            arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "odom_stereo"],
-        ),
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="base_alias",
-            arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
-        ),
-
 
 
         # Republisher
@@ -269,7 +244,7 @@ def generate_launch_description():
             name="rtabmap",
             output="screen",
             parameters=[{
-                "frame_id": "base_link",
+                "frame_id": "x500_0/base_footprint",
                 "map_frame_id": "map",
                 "odom_frame_id": "odom_stereo",
                 "use_sim_time": True,
