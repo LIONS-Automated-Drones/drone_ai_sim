@@ -217,7 +217,12 @@ def generate_launch_description():
                 "Optimizer/GravitySigma": "0.1",
                 "stereo_optical_frame_id": "stereo_left_optical_frame",
                 "stereo_optical_frame_id_right": "stereo_right_optical_frame",
-                "use_sim_time": True
+                "use_sim_time": True,
+
+                # 🔽 Add these to force regular updates
+                "Rtabmap/CreateIntermediateNodes": True,
+                "Rtabmap/DetectionRate": 1.0,
+                "map_always_update": True,
             }],
             remappings=[
                 ("odom", "/stereo_odometry/odom"),
@@ -227,7 +232,8 @@ def generate_launch_description():
                 ("left/camera_info", "/stereo/left/camera_info"),
                 ("right/camera_info", "/stereo/right/camera_info"),
             ],
-        ),
+        )
+
         # Web video server
         Node(
             package="web_video_server",

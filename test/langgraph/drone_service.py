@@ -462,10 +462,42 @@ class DroneService:
             return True
         
         if not self.is_connected:
+            # try to connect
+            await self.connect()
+            if not self.is_connected:
+                mission_log("--- Failed to connect to drone. Cannot start Nav2 control.")
+                return False
+
             mission_log("--- Drone not connected. Cannot start Nav2 control.")
             return False
         
         mission_log("--- Starting Nav2 velocity control...")
+        
+        # Send an initial setpoint before starting offboard mode
+        # This is required by MAVSDK - you must set at least one setpoint before starting offboard
+        try:
+            mission_log("--- Sending initial velocity setpoint (0, 0, 0)...")
+            initial_velocity = VelocityBodyYawspeed(
+                forward_m_s=0.0,
+                right_m_s=0.0,
+                down_m_s=0.0,
+                yawspeed_deg_s=0.0
+            )
+            await self.drone.offboard.set_velocity_body(initial_velocity)
+            mission_log("--- Initial setpoint sent")
+        except Exception as e:
+            mission_log(f"--- Failed to send initial setpoint: {e}")
+            return False
+        
+        # Start offboard mode - this is required for velocity commands to work
+        try:
+            mission_log("--- Starting offboard mode...")
+            await self.drone.offboard.start()
+            mission_log("--- Offboard mode started successfully")
+        except Exception as e:
+            mission_log(f"--- Failed to start offboard mode: {e}")
+            return False
+        
         self.nav_active = True
         self.nav_task = asyncio.create_task(self._nav_velocity_loop())
         return True
@@ -493,8 +525,15 @@ class DroneService:
         self.most_recent_velocity = {"linear_x": 0.0, "linear_y": 0.0, "linear_z": 0.0,
                                        "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0}
         
-        # Command drone to hold position
+        # Stop offboard mode and command drone to hold position
         if self.is_connected:
+            try:
+                mission_log("--- Stopping offboard mode...")
+                await self.drone.offboard.stop()
+                mission_log("--- Offboard mode stopped")
+            except Exception as e:
+                mission_log(f"--- Error stopping offboard mode: {e}")
+            
             await self.drone.action.hold()
             mission_log("--- Nav2 stopped, drone holding position")
         

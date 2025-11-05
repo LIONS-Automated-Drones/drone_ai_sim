@@ -125,11 +125,12 @@ The system handles frame conversions between ROS and MAVSDK:
 
 ## Important Notes
 
-1. **Drone must be connected and armed** before starting Nav2 control
-2. **Manual override takes precedence**: If manual override is enabled, Nav2 control will be automatically stopped
-3. **Offboard mode**: The drone must be in a mode that accepts velocity commands (typically OFFBOARD mode in PX4)
+1. **Drone must be connected, armed, and in the air** before starting Nav2 control
+2. **Offboard mode is automatic**: When you click "Start Nav", the system automatically engages OFFBOARD mode, which is required for velocity commands
+3. **Manual override takes precedence**: If manual override is enabled, Nav2 control will be automatically stopped
 4. **Safety**: Always test in simulation first before using on a physical drone
 5. **Update rate**: The cmd_vel_bridge runs synchronously with ROS callbacks, while the velocity loop runs at 20Hz asynchronously
+6. **Continuous setpoints required**: OFFBOARD mode requires continuous setpoint updates (at least 2Hz). Our 20Hz rate exceeds this requirement.
 6. **UDP Port**: Ensure port 6000 is available on localhost for velocity communication
 
 ## Troubleshooting
