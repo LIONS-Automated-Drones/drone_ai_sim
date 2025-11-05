@@ -84,18 +84,39 @@ def generate_launch_description():
                 "use_sim_time": True
             }]
         ),
+        # Node(
+        #     package="tf2_ros",
+        #     executable="static_transform_publisher",
+        #     name="odom_to_baselink",
+        #     arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "odom_stereo"],
+        # ),
+        # Node(
+        #     package="tf2_ros",
+        #     executable="static_transform_publisher",
+        #     name="basefootprint_to_baselink",
+        #     arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
+        # ),
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            name="odom_to_baselink",
+            name="odom_alias",
             arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "odom_stereo"],
         ),
+
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            name="basefootprint_to_baselink",
+            name="basefootprint_alias",
             arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
         ),
+
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="map_to_odom",
+            arguments=["0", "0", "0", "0", "0", "0", "map", "odom_stereo"],
+        ),
+
 
 
         # Republisher
