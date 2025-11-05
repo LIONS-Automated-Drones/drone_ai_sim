@@ -219,10 +219,9 @@ def generate_launch_description():
                 "stereo_optical_frame_id_right": "stereo_right_optical_frame",
                 "use_sim_time": True,
 
-                # 🔽 Add these to force regular updates
                 "Rtabmap/CreateIntermediateNodes": True,
                 "Rtabmap/DetectionRate": 1.0,
-                "map_always_update": True,
+                "map_always_update": True
             }],
             remappings=[
                 ("odom", "/stereo_odometry/odom"),
