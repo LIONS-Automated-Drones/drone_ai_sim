@@ -17,6 +17,7 @@ class OdomTFPublisher(Node):
     def callback(self, msg: Odometry):
         t = TransformStamped()
         t.header = msg.header
+        t.header.frame_id = "odom_stereo"     # <—— instead of msg.header.frame_id
         t.child_frame_id = "base_link"
         t.transform.translation.x = msg.pose.pose.position.x
         t.transform.translation.y = msg.pose.pose.position.y
