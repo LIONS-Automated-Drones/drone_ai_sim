@@ -559,7 +559,7 @@ class DroneService:
                         forward_m_s=vel["linear_x"],
                         right_m_s=-vel["linear_y"],  # ROS left is positive, MAVSDK right is positive
                         down_m_s=-vel["linear_z"],   # ROS up is positive, MAVSDK down is positive
-                        yawspeed_deg_s=vel["angular_z"] * 57.2958  # Convert rad/s to deg/s
+                        yawspeed_deg_s=vel["angular_z"] * -57.2958  # Convert rad/s to deg/s
                     )
                     await self.drone.offboard.set_velocity_body(velocity_cmd)
                 except Exception as e:

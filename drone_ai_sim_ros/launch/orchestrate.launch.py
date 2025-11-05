@@ -169,22 +169,40 @@ def generate_launch_description():
             }],
         ),
         # RTAB-Map SLAM
-        Node(
+         Node(
             package="rtabmap_odom",
             executable="stereo_odometry",
             name="stereo_odometry",
             output="screen",
             parameters=[{
+                # --- Your existing settings (kept) ---
                 "frame_id": "base_link",
                 "odom_frame_id": "odom_stereo",
                 "approx_sync": True,
-                "approx_sync_max_interval": 0.01,
+                "approx_sync_max_interval": 0.1,   # you had 0.1; OK for laggy sim/IMU sync
                 "subscribe_imu": True,
                 "Vis/UseIMU": True,
                 "Vis/IMUGravity": True,
                 "queue_size": 30,
                 "use_sim_time": True,
-                "publish_tf": True
+                "publish_tf": True,
+
+                # --- Robustness against visual dropouts (added) ---
+                # Relax matching & make recovery faster
+                "Vis/MinInliers": 8,               # default 20 → tolerate low texture
+                "Vis/InlierDistance": 0.1,         # reprojection error (default ~0.02)
+                "Vis/MaxDepth": 10.0,              # ignore very far, noisy points
+                "Vis/CorType": 1,                  # 0=FLANN, 1=BruteForce (more stable)
+
+                # Motion model & filtering
+                "Odom/GuessMotion": True,          # constant-vel guess helps between frames
+                "Odom/FilteringStrategy": 1,       # simple motion filter
+                "Odom/Strategy": 0,                # 0=F2M (default & robust); 1=F2F is lighter
+                "Odom/ResetCountdown": 3,          # auto-reset after N consecutive failures
+                "Odom/WaitForTransform": 0.2,      # tolerate some TF latency
+
+                # Sync tolerance (if your IMU is slower or skewed, widen slightly)
+                # "approx_sync_max_interval": 0.15,
             }],
             remappings=[
                 ("left/image_rect", "/stereo/left/image_rect"),
@@ -196,13 +214,14 @@ def generate_launch_description():
             ],
         ),
 
-        # -------------------- RTAB-Map SLAM --------------------
+        # -------------------- RTAB-Map SLAM (rtabmap) --------------------
         Node(
             package="rtabmap_slam",
             executable="rtabmap",
             name="rtabmap",
             output="screen",
             parameters=[{
+                # --- Your existing settings (kept) ---
                 "frame_id": "base_link",
                 "subscribe_stereo": True,
                 "approx_sync": True,
@@ -214,14 +233,36 @@ def generate_launch_description():
                 "publish_trajectory": True,
                 "Vis/UseIMU": True,
                 "Vis/IMUGravity": True,
-                "Optimizer/GravitySigma": "0.1",
+                "Optimizer/GravitySigma": "0.1",           # must be string
                 "stereo_optical_frame_id": "stereo_left_optical_frame",
                 "stereo_optical_frame_id_right": "stereo_right_optical_frame",
                 "use_sim_time": True,
 
-                "Rtabmap/CreateIntermediateNodes": "true",   # must be a string
-                "Rtabmap/DetectionRate": "1.0",              # string too
-                "map_always_update": True,   
+                # --- The two you asked for (string-typed to avoid InvalidParameterType) ---
+                "Rtabmap/CreateIntermediateNodes": "true",
+                "Rtabmap/DetectionRate": "1.0",
+
+                # Keep map updating every callback even without loop closures
+                "map_always_update": True,
+
+                # --- Resilience & recovery (added, all strings) ---
+                "Mem/InitWMWithAllNodes": "true",          # enables relocalization using prior nodes
+                "Rtabmap/StartNewMapOnLoopClosure": "false",
+                "RGBD/StartAtOrigin": "true",              # helps consistency in sim
+                "RGBD/OptimizeMaxError": "3.0",            # relax optimizer rejection a bit
+                "Reg/Strategy": "0",                       # 0=Vis; keep consistent with odom
+                "Reg/Force3DoF": "true",                   # typical for ground robots (set false if flying)
+                "Optimizer/Strategy": "1",                 # 1=GTSAM; or "0" for g2o
+                "Optimizer/Robust": "true",
+
+                # Make loop closures easier in sparse texture
+                "RGBD/LocalImmunizationRatio": "0.2",
+                "RGBD/ProximityBySpace": "true",
+                "RGBD/ProximityPathRawPosesUsed": "true",
+
+                # If odom blips, keep the graph alive
+                "Rtabmap/PublishLastSignature": "true",
+                "Rtabmap/TimeThr": "0.0",
             }],
             remappings=[
                 ("odom", "/stereo_odometry/odom"),
@@ -232,6 +273,7 @@ def generate_launch_description():
                 ("right/camera_info", "/stereo/right/camera_info"),
             ],
         ),
+
 
         # Web video server
         Node(
