@@ -291,7 +291,7 @@ def generate_launch_description():
                 "Reg/Force3DoF": "true",
                 "Reg/Strategy": "0",
                 "use_action_for_goal": False,
-                "map_always_update": True,
+                "map_always_update": False,
                 "map_empty_ray_tracing": True,
                 "map_cleanup": True,
                 "map_filter_angle": 30.0,
