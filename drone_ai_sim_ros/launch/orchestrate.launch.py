@@ -240,6 +240,7 @@ def generate_launch_description():
                 "subscribe_stereo": True,
                 "approx_sync": True,
                 "queue_size": 10,
+                "delete_db_on_start": True,
                 "Rtabmap/DetectionRate": "1.0",
                 "Rtabmap/CreateIntermediateNodes": "true",
                 "Rtabmap/StartNewMapOnLoopClosure": "false",
