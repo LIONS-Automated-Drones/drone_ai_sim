@@ -231,7 +231,7 @@ def generate_launch_description():
                 ("left/camera_info", "/stereo/left/camera_info"),
                 ("right/camera_info", "/stereo/right/camera_info"),
             ],
-        )
+        ),
 
         # Web video server
         Node(
