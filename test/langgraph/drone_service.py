@@ -4,6 +4,7 @@ import json
 import time
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
+from mavsdk.offboard import VelocityBodyYawspeed
 from utils import calculate_distance
 from mission_log import mission_log, set_telemetry_callback, send_telemetry
 from environment_settings import ENVIRONMENT_SETTINGS
@@ -509,17 +510,19 @@ class DroneService:
             while self.nav_active and self.is_connected:
                 vel = self.most_recent_velocity
                 
-                # Send velocity command using MAVSDK's set_velocity_ned
+                # Send velocity command using MAVSDK's set_velocity_body
                 # Note: MAVSDK uses NED frame (North-East-Down)
                 # ROS cmd_vel typically uses body frame (Forward-Left-Up)
                 # We'll send the velocity in body frame using set_velocity_body
                 try:
-                    await self.drone.offboard.set_velocity_body({
-                        "forward_m_s": vel["linear_x"],
-                        "right_m_s": -vel["linear_y"],  # ROS left is positive, MAVSDK right is positive
-                        "down_m_s": -vel["linear_z"],   # ROS up is positive, MAVSDK down is positive
-                        "yawspeed_deg_s": vel["angular_z"] * 57.2958  # Convert rad/s to deg/s
-                    })
+                    # Create VelocityBodyYawspeed object
+                    velocity_cmd = VelocityBodyYawspeed(
+                        forward_m_s=vel["linear_x"],
+                        right_m_s=-vel["linear_y"],  # ROS left is positive, MAVSDK right is positive
+                        down_m_s=-vel["linear_z"],   # ROS up is positive, MAVSDK down is positive
+                        yawspeed_deg_s=vel["angular_z"] * 57.2958  # Convert rad/s to deg/s
+                    )
+                    await self.drone.offboard.set_velocity_body(velocity_cmd)
                 except Exception as e:
                     mission_log(f"--- Error sending velocity command: {e}")
                 
