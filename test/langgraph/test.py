@@ -2,6 +2,8 @@ import asyncio
 import os
 from dotenv import load_dotenv
 import websockets
+import socket
+import json
 
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -135,6 +137,22 @@ async def websocket_handler(websocket):
                 if current_mission_task:
                     current_mission_task.cancel()
 
+            # Handle start_nav command
+            elif msg == "start_nav":
+                print("Received START_NAV signal from dashboard.")
+                success = await drone_service.start_nav_control()
+                if success:
+                    await websocket.send("Nav2 control started. Drone will follow /cmd_vel commands.")
+                else:
+                    await websocket.send("Failed to start Nav2 control. Is the drone connected?")
+            # Handle stop_nav command
+            elif msg == "stop_nav":
+                print("Received STOP_NAV signal from dashboard.")
+                success = await drone_service.stop_nav_control()
+                if success:
+                    await websocket.send("Nav2 control stopped. Drone is holding position.")
+                else:
+                    await websocket.send("Failed to stop Nav2 control.")
             # If there's a mission already running, reject new mission
             elif mission_running.is_set():
                 # Optionally cancel the previous mission or inform the client
@@ -154,8 +172,54 @@ async def websocket_handler(websocket):
         except:
             pass  # Connection might be closed
 
+async def velocity_listener():
+    """
+    UDP listener that receives velocity commands from cmd_vel_bridge ROS node.
+    Runs as a background task and updates drone_service velocity.
+    """
+    # Create UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(("127.0.0.1", 6000))
+    sock.setblocking(False)  # Non-blocking for asyncio
+    
+    print("--- Velocity listener started on UDP port 6000 ---")
+    
+    loop = asyncio.get_event_loop()
+    
+    try:
+        while True:
+            try:
+                # Receive data (non-blocking)
+                data, addr = await loop.sock_recvfrom(sock, 1024)
+                
+                # Parse JSON
+                velocity_data = json.loads(data.decode())
+                
+                # Update drone_service
+                drone_service.update_nav_velocity(
+                    linear_x=velocity_data.get("linear_x", 0.0),
+                    linear_y=velocity_data.get("linear_y", 0.0),
+                    linear_z=velocity_data.get("linear_z", 0.0),
+                    angular_x=velocity_data.get("angular_x", 0.0),
+                    angular_y=velocity_data.get("angular_y", 0.0),
+                    angular_z=velocity_data.get("angular_z", 0.0)
+                )
+                
+            except json.JSONDecodeError as e:
+                print(f"Error decoding velocity data: {e}")
+            except Exception as e:
+                print(f"Error in velocity listener: {e}")
+                await asyncio.sleep(0.01)  # Brief pause on error
+    except asyncio.CancelledError:
+        print("--- Velocity listener stopped ---")
+    finally:
+        sock.close()
+
 async def run_websocket_server():
-    """Starts the WebSocket server."""
+    """Starts the WebSocket server and velocity listener."""
+    # Start the velocity listener as a background task
+    velocity_task = asyncio.create_task(velocity_listener())
+    
     async with websockets.serve(websocket_handler, ENVIRONMENT_SETTINGS.server_address, ENVIRONMENT_SETTINGS.server_port):
         print(f"--- WebSocket server started at ws://{ENVIRONMENT_SETTINGS.server_address}:{ENVIRONMENT_SETTINGS.server_port} ---")
         await asyncio.Future()  # Run forever

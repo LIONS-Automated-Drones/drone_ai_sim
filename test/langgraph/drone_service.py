@@ -27,6 +27,12 @@ class DroneService:
         self.telemetry_streaming = False
         self.telemetry_task = None
         self.takeoff_position = None  # Store initial position for relative calculations
+        
+        # Nav2 velocity control
+        self.nav_active = False
+        self.nav_task = None
+        self.most_recent_velocity = {"linear_x": 0.0, "linear_y": 0.0, "linear_z": 0.0, 
+                                       "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0}
 
     async def connect(self):
         """
@@ -428,6 +434,104 @@ class DroneService:
         await self.drone.action.hold()
         mission_log("--- Canceling and holding...")
         return True
+
+    def update_nav_velocity(self, linear_x: float, linear_y: float, linear_z: float,
+                            angular_x: float, angular_y: float, angular_z: float):
+        """
+        Updates the most recent velocity command from Nav2.
+        This is called by the cmdbridge ROS node.
+        """
+        self.most_recent_velocity = {
+            "linear_x": linear_x,
+            "linear_y": linear_y,
+            "linear_z": linear_z,
+            "angular_x": angular_x,
+            "angular_y": angular_y,
+            "angular_z": angular_z
+        }
+        mission_log(f"--- Updated Nav2 velocity: linear=({linear_x:.2f}, {linear_y:.2f}, {linear_z:.2f}), angular=({angular_x:.2f}, {angular_y:.2f}, {angular_z:.2f})")
+
+    async def start_nav_control(self):
+        """
+        Starts the Nav2 velocity control loop.
+        The drone will continuously send the most recent velocity command to MAVSDK.
+        """
+        if self.nav_active:
+            mission_log("--- Nav2 control already active")
+            return True
+        
+        if not self.is_connected:
+            mission_log("--- Drone not connected. Cannot start Nav2 control.")
+            return False
+        
+        mission_log("--- Starting Nav2 velocity control...")
+        self.nav_active = True
+        self.nav_task = asyncio.create_task(self._nav_velocity_loop())
+        return True
+
+    async def stop_nav_control(self):
+        """
+        Stops the Nav2 velocity control loop and commands the drone to hold position.
+        """
+        if not self.nav_active:
+            mission_log("--- Nav2 control not active")
+            return True
+        
+        mission_log("--- Stopping Nav2 velocity control...")
+        self.nav_active = False
+        
+        if self.nav_task:
+            self.nav_task.cancel()
+            try:
+                await self.nav_task
+            except asyncio.CancelledError:
+                pass
+            self.nav_task = None
+        
+        # Reset velocity to zero
+        self.most_recent_velocity = {"linear_x": 0.0, "linear_y": 0.0, "linear_z": 0.0,
+                                       "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0}
+        
+        # Command drone to hold position
+        if self.is_connected:
+            await self.drone.action.hold()
+            mission_log("--- Nav2 stopped, drone holding position")
+        
+        return True
+
+    async def _nav_velocity_loop(self):
+        """
+        Internal loop that continuously sends velocity commands to MAVSDK.
+        Runs at 20Hz to match typical Nav2 update rates.
+        """
+        try:
+            mission_log("--- Nav2 velocity loop started")
+            while self.nav_active and self.is_connected:
+                vel = self.most_recent_velocity
+                
+                # Send velocity command using MAVSDK's set_velocity_ned
+                # Note: MAVSDK uses NED frame (North-East-Down)
+                # ROS cmd_vel typically uses body frame (Forward-Left-Up)
+                # We'll send the velocity in body frame using set_velocity_body
+                try:
+                    await self.drone.offboard.set_velocity_body({
+                        "forward_m_s": vel["linear_x"],
+                        "right_m_s": -vel["linear_y"],  # ROS left is positive, MAVSDK right is positive
+                        "down_m_s": -vel["linear_z"],   # ROS up is positive, MAVSDK down is positive
+                        "yawspeed_deg_s": vel["angular_z"] * 57.2958  # Convert rad/s to deg/s
+                    })
+                except Exception as e:
+                    mission_log(f"--- Error sending velocity command: {e}")
+                
+                # Run at 20Hz
+                await asyncio.sleep(1/20)
+        except asyncio.CancelledError:
+            mission_log("--- Nav2 velocity loop cancelled")
+        except Exception as e:
+            mission_log(f"--- Error in Nav2 velocity loop: {e}")
+            import traceback
+            mission_log(traceback.format_exc())
+            self.nav_active = False
 
 # Helper to fix a common issue with anext in some environments
 async def anext(ait):
