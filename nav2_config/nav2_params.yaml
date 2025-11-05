@@ -27,7 +27,7 @@ controller_server:
     use_sim_time: true
     controller_frequency: 10.0
     transform_tolerance: 2.0 # may need adjusted for your setup
-
+    odom_topic: "/stereo_odometry/odom"
     # Which controller(s) to load
     controller_plugins: ["FollowPath"]
 
