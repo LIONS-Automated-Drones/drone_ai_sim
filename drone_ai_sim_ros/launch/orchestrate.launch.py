@@ -219,9 +219,9 @@ def generate_launch_description():
                 "stereo_optical_frame_id_right": "stereo_right_optical_frame",
                 "use_sim_time": True,
 
-                "Rtabmap/CreateIntermediateNodes": True,
-                "Rtabmap/DetectionRate": 1.0,
-                "map_always_update": True
+                "Rtabmap/CreateIntermediateNodes": "true",   # must be a string
+                "Rtabmap/DetectionRate": "1.0",              # string too
+                "map_always_update": True,   
             }],
             remappings=[
                 ("odom", "/stereo_odometry/odom"),
