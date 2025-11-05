@@ -14,7 +14,11 @@ def generate_launch_description():
                 "/stereo/right@sensor_msgs/msg/Image@gz.msgs.Image",
                 "/stereo/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
                 "/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU",
+                "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
                 "/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock"
+            ],
+            remappings=[
+                ("/odom", "/stereo_odometry/odom"),  # bridge and remap to match rtabmap/nav2 expectation
             ],
         ),
         # Static TFs
@@ -80,6 +84,19 @@ def generate_launch_description():
                 "use_sim_time": True
             }]
         ),
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="odom_to_baselink",
+            arguments=["0", "0", "0", "0", "0", "0", "x500_0/odom", "odom_stereo"],
+        ),
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="basefootprint_to_baselink",
+            arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
+        ),
+
 
         # Republisher
         Node(
@@ -169,61 +186,61 @@ def generate_launch_description():
             }],
         ),
         # RTAB-Map SLAM
-        Node(
-            package="rtabmap_odom",
-            executable="stereo_odometry",
-            name="stereo_odometry",
-            output="screen",
-            parameters=[{
-                # Frames
-                "frame_id": "base_link",
-                "odom_frame_id": "odom_stereo",
-                "publish_tf": True,
+        # Node(
+        #     package="rtabmap_odom",
+        #     executable="stereo_odometry",
+        #     name="stereo_odometry",
+        #     output="screen",
+        #     parameters=[{
+        #         # Frames
+        #         "frame_id": "base_link",
+        #         "odom_frame_id": "odom_stereo",
+        #         "publish_tf": True,
 
-                # Time + Sync
-                "use_sim_time": True,
-                "approx_sync": True,
-                "approx_sync_max_interval": 0.01,
-                "topic_queue_size": 10,
-                "sync_queue_size": 30,
+        #         # Time + Sync
+        #         "use_sim_time": True,
+        #         "approx_sync": True,
+        #         "approx_sync_max_interval": 0.01,
+        #         "topic_queue_size": 10,
+        #         "sync_queue_size": 30,
 
-                # IMU
-                "subscribe_imu": True,
-                "Vis/UseIMU": "true",
-                "Vis/IMUGravity": "true",
+        #         # IMU
+        #         "subscribe_imu": True,
+        #         "Vis/UseIMU": "true",
+        #         "Vis/IMUGravity": "true",
 
-                # Filtering and motion
-                "Odom/Strategy": "0",                # Visual odometry
-                "Odom/FilteringStrategy": "0",       # EKF off (string, not int)
-                "Odom/ResetCountdown": "1",
-                "Odom/GuessSmoothing": "true",
-                "Odom/ResetOnLost": "true",
-                "Odom/QualityWarningThr": "10",
+        #         # Filtering and motion
+        #         "Odom/Strategy": "0",                # Visual odometry
+        #         "Odom/FilteringStrategy": "0",       # EKF off (string, not int)
+        #         "Odom/ResetCountdown": "1",
+        #         "Odom/GuessSmoothing": "true",
+        #         "Odom/ResetOnLost": "true",
+        #         "Odom/QualityWarningThr": "10",
 
-                # Visual feature params
-                "Vis/CorType": "1",
-                "Vis/FeatureType": "6",              # GFTT/ORB mix
-                "Vis/MaxFeatures": "2000",
-                "Vis/MinInliers": "15",
+        #         # Visual feature params
+        #         "Vis/CorType": "1",
+        #         "Vis/FeatureType": "6",              # GFTT/ORB mix
+        #         "Vis/MaxFeatures": "2000",
+        #         "Vis/MinInliers": "15",
 
-                # Matching thresholds
-                "Vis/EpipolarGeometryVar": "0.01",
-                "Vis/InlierDistance": "0.01",
-                "Vis/EstimationType": "1",           # Motion estimation
-                "Vis/BundleAdjustment": "2",         # Ceres backend
+        #         # Matching thresholds
+        #         "Vis/EpipolarGeometryVar": "0.01",
+        #         "Vis/InlierDistance": "0.01",
+        #         "Vis/EstimationType": "1",           # Motion estimation
+        #         "Vis/BundleAdjustment": "2",         # Ceres backend
 
-                # Debugging
-                "log_to_rosout_level": 4,
-            }],
-            remappings=[
-                ("left/image_rect", "/stereo/left/image_rect"),
-                ("right/image_rect", "/stereo/right/image_rect"),
-                ("left/camera_info", "/stereo/left/camera_info"),
-                ("right/camera_info", "/stereo/right/camera_info"),
-                ("imu", "/imu/data"),
-                ("odom", "/stereo_odometry/odom"),
-            ],
-        ),
+        #         # Debugging
+        #         "log_to_rosout_level": 4,
+        #     }],
+        #     remappings=[
+        #         ("left/image_rect", "/stereo/left/image_rect"),
+        #         ("right/image_rect", "/stereo/right/image_rect"),
+        #         ("left/camera_info", "/stereo/left/camera_info"),
+        #         ("right/camera_info", "/stereo/right/camera_info"),
+        #         ("imu", "/imu/data"),
+        #         ("odom", "/stereo_odometry/odom"),
+        #     ],
+        # ),
 
 
         # -------------------- RTAB-Map SLAM (rtabmap) --------------------
