@@ -11,14 +11,19 @@ from tools import get_tools, drone_service
 from graph import build_graph
 from mission_log import set_websocket_callback, mission_log
 from environment_settings import ENVIRONMENT_SETTINGS
+from utils import get_bearing_and_move
 # --- 1. Setup the Agent ---
 tools = get_tools()
 tool_names = [tool.name for tool in tools]
 llm = ChatOpenAI(
-    model=ENVIRONMENT_SETTINGS.openrouter_model,
-    openai_api_base=ENVIRONMENT_SETTINGS.openrouter_base_url,
-    openai_api_key=ENVIRONMENT_SETTINGS.openrouter_api_key,
+    model=os.getenv("OLLAMA_MODEL"),
+    openai_api_base=os.getenv("OLLAMA_BASE_URL") + "/v1",
+    openai_api_key="ollama",
     temperature=0,
+    # model=ENVIRONMENT_SETTINGS.openrouter_model,
+    # openai_api_base=ENVIRONMENT_SETTINGS.openrouter_base_url,
+    # openai_api_key=ENVIRONMENT_SETTINGS.openrouter_api_key,
+    # temperature=0,
 )
 
 agent_prompt = ChatPromptTemplate.from_messages(
@@ -140,6 +145,30 @@ async def websocket_handler(websocket):
                 # Optionally cancel the previous mission or inform the client
                 print("Mission already running, cannot process command...")
                 await websocket.send("Please cancel the previous mission or wait for it to complete before sending additional mission commands.")
+            elif msg == "armtakeoff":
+                print("Received ARMTAKEOFF command from dashboard.")
+                connected = await drone_service.connect()
+                armed = await drone_service.arm()
+                takeoff_success = await drone_service.takeoff()
+                print(f"Vars: connected={connected}, armed={armed}, takeoff_success={takeoff_success}")
+                await websocket.send(message)
+            elif msg == "moveforward":
+                print("Received MOVEFORWARD command from dashboard.")
+                distance_m = 1
+                telemetry = await drone_service.get_telemetry()
+                if not telemetry:
+                    print("Unable to get telemetry data.")
+                    await websocket.send("Error: Unable to get telemetry data.")
+                    continue
+                new_lat, new_lon = get_bearing_and_move(
+                    telemetry["latitude_deg"],
+                    telemetry["longitude_deg"],
+                    telemetry["heading_deg"],
+                    "forward",
+                    distance_m)
+                success = await drone_service.goto_location(new_lat, new_lon, telemetry["absolute_altitude_m"], telemetry["heading_deg"])
+                message = "Move forward command executed." if success else "Move forward command failed."
+                await websocket.send(message)
             else:
                 # Start new mission as background task
                 print(f"Starting mission: {message}")
