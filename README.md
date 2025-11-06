@@ -74,6 +74,8 @@ PX4_GZ_WORLD=depot HEADLESS=1 make px4_sitl gz_x500
 cd ~/sd1_ws/drone_ai_sim  # Navigate to repo root
 source install/setup.bash
 ros2 launch drone_ai_sim_ros orchestrate.launch.py
+ros2 launch drone_ai_sim_ros orchestrateH.launch.py
+
 
 # Terminal 3 - Run LangGraph agent
 source ~/sd1_ws/drone_venv/bin/activate

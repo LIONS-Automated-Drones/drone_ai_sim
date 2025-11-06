@@ -16,14 +16,14 @@ from utils import get_bearing_and_move
 tools = get_tools()
 tool_names = [tool.name for tool in tools]
 llm = ChatOpenAI(
-    model=os.getenv("OLLAMA_MODEL"),
-    openai_api_base=os.getenv("OLLAMA_BASE_URL") + "/v1",
-    openai_api_key="ollama",
-    temperature=0,
-    # model=ENVIRONMENT_SETTINGS.openrouter_model,
-    # openai_api_base=ENVIRONMENT_SETTINGS.openrouter_base_url,
-    # openai_api_key=ENVIRONMENT_SETTINGS.openrouter_api_key,
+    # model=os.getenv("OLLAMA_MODEL"),
+    # openai_api_base=os.getenv("OLLAMA_BASE_URL") + "/v1",
+    # openai_api_key="ollama",
     # temperature=0,
+    model=ENVIRONMENT_SETTINGS.openrouter_model,
+    openai_api_base=ENVIRONMENT_SETTINGS.openrouter_base_url,
+    openai_api_key=ENVIRONMENT_SETTINGS.openrouter_api_key,
+    temperature=0
 )
 
 agent_prompt = ChatPromptTemplate.from_messages(

@@ -285,7 +285,7 @@ def generate_launch_description():
             parameters=[{
                 "use_sim_time": use_sim_time,
                 "mode": mode,  # Pass mode to the node
-                "model_name": "yolov8n.pt",
+                "model_name": "/home/jamilr/sd1_ws/yolov8n.pt",
                 "confidence_threshold": 0.5,
                 "target_frame": "map"  # Transform detections to map frame for global localization
             }]
