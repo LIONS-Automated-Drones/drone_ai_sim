@@ -44,8 +44,9 @@ controller_server:
     # Main DWB controller
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
-      debug_trajectory_details: false
+      debug_trajectory_details: true
       transform_tolerance: 2.0
+      use_shortest_angular_distance: true
 
       # Velocity limits
       min_vel_x: 0.0

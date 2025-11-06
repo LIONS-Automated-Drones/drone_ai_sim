@@ -14,6 +14,7 @@ class DroneService:
     def __init__(self):
         self.drone = System()
         self.is_connected = False
+        self.is_armed = False
         
         # Load connection settings from environment variables
         self.virtual = ENVIRONMENT_SETTINGS.is_gazebo
@@ -55,12 +56,12 @@ class DroneService:
 
         async for state in self.drone.core.connection_state():
             if state.is_connected:
-                mission_log("--- Drone connected!")
                 self.is_connected = True
                 async for health in self.drone.telemetry.health():
                     mission_log("--- Health status ---")
                     mission_log(health)
                     break
+                mission_log("--- Drone connected!")
                 return True
         return False
 
@@ -73,6 +74,7 @@ class DroneService:
             return False
         in_air = await anext(self.drone.telemetry.in_air())
         if in_air:
+            self.is_armed = True
             mission_log("--- Drone is in air. Already armed.")
             return True
         mission_log("--- Arming drone...")
@@ -442,6 +444,14 @@ class DroneService:
         Updates the most recent velocity command from Nav2.
         This is called by the cmdbridge ROS node.
         """
+        # if angular_z is greater than 0 and less than 0.06, set forward velocity
+        # to 0.06
+        if angular_z > 0 and angular_z < 0.06:
+            linear_x = 0.25
+        # if angular_z is less than 0 and greater than -0.06, set forward velocity
+        # to -0.06
+        elif angular_z < 0 and angular_z > -0.06:
+            linear_x = 0.25
         self.most_recent_velocity = {
             "linear_x": linear_x,
             "linear_y": linear_y,
@@ -450,7 +460,8 @@ class DroneService:
             "angular_y": angular_y,
             "angular_z": angular_z
         }
-        mission_log(f"--- Updated Nav2 velocity: linear=({linear_x:.2f}, {linear_y:.2f}, {linear_z:.2f}), angular=({angular_x:.2f}, {angular_y:.2f}, {angular_z:.2f})")
+        if self.nav_active:
+            mission_log(f"--- Updated Nav2 velocity: linear=({linear_x:.2f}, {linear_y:.2f}, {linear_z:.2f}), angular=({angular_x:.2f}, {angular_y:.2f}, {angular_z:.2f})")
 
     async def start_nav_control(self):
         """
@@ -467,9 +478,11 @@ class DroneService:
             if not self.is_connected:
                 mission_log("--- Failed to connect to drone. Cannot start Nav2 control.")
                 return False
-
-            mission_log("--- Drone not connected. Cannot start Nav2 control.")
-            return False
+        if not self.is_armed:
+            await self.arm()
+            if not self.is_armed:
+                mission_log("--- Failed to arm drone. Cannot start Nav2 control.")
+                return False
         
         mission_log("--- Starting Nav2 velocity control...")
         
@@ -554,6 +567,8 @@ class DroneService:
                 # ROS cmd_vel typically uses body frame (Forward-Left-Up)
                 # We'll send the velocity in body frame using set_velocity_body
                 try:
+                    angular_z = vel["angular_z"]
+                    yawspeed_deg_s = angular_z * -57.2958  # Convert rad/s to deg/s
                     # Create VelocityBodyYawspeed object
                     velocity_cmd = VelocityBodyYawspeed(
                         forward_m_s=vel["linear_x"],
