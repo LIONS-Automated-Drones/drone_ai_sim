@@ -218,7 +218,7 @@ class SenseObjectsTool(BaseTool):
                 mission_log("--- Sending detection request...")
                 
                 try:
-                    async with session.post(yolo_url) as response:
+                    async with session.get(yolo_url) as response:
                         if response.status != 200:
                             error_text = await response.text()
                             return f"Error: YOLO server returned status {response.status}: {error_text}"
