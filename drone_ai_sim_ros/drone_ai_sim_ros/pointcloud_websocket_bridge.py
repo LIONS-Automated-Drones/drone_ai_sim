@@ -10,8 +10,10 @@ import json
 import struct
 import argparse
 import socket
+import threading
 from typing import Optional, Dict, Any
 import websockets
+from aiohttp import web
 
 import rclpy
 from rclpy.node import Node
@@ -39,6 +41,7 @@ class PointCloudWebSocketBridge(Node):
         self.latest_pointcloud_data: Optional[Dict[str, Any]] = None
         self.latest_pose_data: Optional[Dict[str, Any]] = None
         self.latest_path_data: Optional[Dict[str, Any]] = None
+        self.world_memory: Dict[str, Any] = {}
         self.connected_clients: set = set()
         self.data_lock = asyncio.Lock()
 
@@ -66,11 +69,21 @@ class PointCloudWebSocketBridge(Node):
             10
         )
 
+        # HTTP Server setup
+        self.http_port = 5445
+        self.app = None
+        self.runner = None
+        self.http_thread = None
+        
+        # Start HTTP server in a separate thread
+        self.start_http_server()
+
         self.get_logger().info("✅ PointCloudWebSocketBridge node initialized.")
         self.get_logger().info(f"🛰️  Subscribed to topic: {self.topic_name}")
         self.get_logger().info(f"📍 Subscribed to pose: /localization_pose")
         self.get_logger().info(f"🛤️  Subscribed to path: /mapPath")
         self.get_logger().info(f"🌐 WebSocket configured for ws://{self.host}:{self.port}")
+        self.get_logger().info(f"🔌 HTTP server running on port: {self.http_port}")
         self.get_logger().info("⏳ Waiting for messages...")
 
     def pointcloud_callback(self, msg: PointCloud2):
@@ -203,7 +216,8 @@ class PointCloudWebSocketBridge(Node):
         combined_data = {
             'pointcloud': self.latest_pointcloud_data,
             'pose': self.latest_pose_data,
-            'path': self.latest_path_data
+            'path': self.latest_path_data,
+            'world_memory': self.world_memory
         }
 
         json_data = json.dumps(combined_data)
@@ -234,7 +248,8 @@ class PointCloudWebSocketBridge(Node):
                 combined_data = {
                     'pointcloud': self.latest_pointcloud_data,
                     'pose': self.latest_pose_data,
-                    'path': self.latest_path_data
+                    'path': self.latest_path_data,
+                    'world_memory': self.world_memory
                 }
                 await websocket.send(json.dumps(combined_data))
 
@@ -248,7 +263,8 @@ class PointCloudWebSocketBridge(Node):
                             combined_data = {
                                 'pointcloud': self.latest_pointcloud_data,
                                 'pose': self.latest_pose_data,
-                                'path': self.latest_path_data
+                                'path': self.latest_path_data,
+                                'world_memory': self.world_memory
                             }
                             await websocket.send(json.dumps(combined_data))
                 except json.JSONDecodeError:
@@ -258,6 +274,63 @@ class PointCloudWebSocketBridge(Node):
         finally:
             self.connected_clients.discard(websocket)
             self.get_logger().info(f'👥 Clients remaining: {len(self.connected_clients)}')
+
+    def start_http_server(self):
+        """Start the aiohttp server in a separate thread."""
+        def run_server():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            self.app = web.Application()
+            self.app.router.add_get('/health', self.handle_health)
+            self.app.router.add_post('/world_memory', self.handle_world_memory_update)
+            
+            self.runner = web.AppRunner(self.app)
+            loop.run_until_complete(self.runner.setup())
+            site = web.TCPSite(self.runner, '0.0.0.0', self.http_port)
+            loop.run_until_complete(site.start())
+            
+            self.get_logger().info(f"✅ HTTP server started on 0.0.0.0:{self.http_port}")
+            loop.run_forever()
+        
+        self.http_thread = threading.Thread(target=run_server, daemon=True)
+        self.http_thread.start()
+    
+    async def handle_health(self, request):
+        """Health check endpoint."""
+        return web.json_response({
+            'status': 'healthy',
+            'node': 'pointcloud_websocket_bridge',
+            'http_port': self.http_port,
+            'websocket_port': self.port,
+            'connected_clients': len(self.connected_clients),
+            'has_pointcloud': self.latest_pointcloud_data is not None,
+            'has_pose': self.latest_pose_data is not None,
+            'has_path': self.latest_path_data is not None,
+            'world_memory_size': len(self.world_memory)
+        })
+    
+    async def handle_world_memory_update(self, request):
+        """HTTP POST endpoint to update world_memory."""
+        try:
+            data = await request.json()
+            self.get_logger().info(f"📥 Received world_memory update: {len(data)} objects")
+            
+            async with self.data_lock:
+                self.world_memory = data
+                # Broadcast to all connected clients
+                await self.broadcast_to_clients()
+            
+            return web.json_response({
+                'success': True,
+                'message': f'Updated world_memory with {len(data)} objects'
+            })
+        except Exception as e:
+            self.get_logger().error(f"💥 Error updating world_memory: {str(e)}")
+            return web.json_response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
 
 
 async def main_async(topic=None, port=None, host=None):

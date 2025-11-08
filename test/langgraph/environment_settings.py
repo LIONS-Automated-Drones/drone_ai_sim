@@ -11,7 +11,7 @@ class EnvironmentSettings:
         self.openrouter_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
         self.openrouter_model = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash-lite")
         self.is_gazebo = os.getenv("IS_GAZEBO", "true").lower() == "true"
-        self.serial_port = os.getenv("SERIAL_PORT", "/dev/tty.usbserial-0001")
+        self.serial_port = os.getenv("SERIAL_PORT", "COM3")
         self.baud_rate = os.getenv("BAUD_RATE", "57600")
         self.udp_address = os.getenv("UDP_ADDRESS", "udp://:14540")
         self.server_address = os.getenv("SERVER_ADDRESS", "0.0.0.0")

@@ -1,5 +1,7 @@
 import re
 import json
+import os
+import aiohttp
 from langchain_core.messages import HumanMessage, ToolMessage
 from state import AgentState
 from tools import get_tools
@@ -91,8 +93,34 @@ async def sequential_tool_node(state: AgentState) -> dict:
     if tool_name == "sense_objects":
         updated_memory = parse_sense_objects_response(str(response), state.get("world_memory", {}))
         result["world_memory"] = updated_memory
+        
+        # Send the updated world_memory to the pointcloud bridge
+        await send_world_memory_to_bridge(updated_memory)
     
     return result
+
+
+async def send_world_memory_to_bridge(world_memory: dict):
+    """
+    Send the updated world_memory to the pointcloud websocket bridge.
+    
+    Args:
+        world_memory: The world_memory dictionary to send
+    """
+    # Get the Linux IP from environment variable
+    linux_ip = os.environ.get('YOLO_SERVER_IP', 'localhost')
+    bridge_url = f'http://{linux_ip}:5445/world_memory'
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(bridge_url, json=world_memory) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    print(f"✅ Successfully sent world_memory to bridge: {result.get('message', 'OK')}")
+                else:
+                    print(f"⚠️ Failed to send world_memory to bridge: HTTP {response.status}")
+    except Exception as e:
+        print(f"⚠️ Error sending world_memory to bridge: {str(e)}")
 
 
 def parse_sense_objects_response(response: str, current_memory: dict) -> dict:
