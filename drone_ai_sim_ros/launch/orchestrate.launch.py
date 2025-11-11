@@ -14,7 +14,7 @@ def generate_launch_description():
                 "/stereo/right@sensor_msgs/msg/Image@gz.msgs.Image",
                 "/stereo/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
                 "/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU",
-                "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
+                "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry[frame_id:=][child_frame_id:=]"
                 "/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock"
             ]
         ),
