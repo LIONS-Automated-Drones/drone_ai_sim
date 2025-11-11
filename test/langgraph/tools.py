@@ -7,8 +7,34 @@ from drone_service import DroneService
 from utils import get_bearing_and_move, get_cardinal_and_move
 from mission_log import mission_log
 
+
+async def send_world_memory_to_bridge(world_memory: dict):
+    """
+    Send the updated world_memory to the pointcloud websocket bridge.
+    
+    Args:
+        world_memory: The world_memory dictionary to send
+    """
+    # Get the server IP from environment variable
+    server_ip = os.environ.get('YOLO_SERVER_IP', 'localhost')
+    bridge_url = f'http://{server_ip}:5445/world_memory'
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(bridge_url, json=world_memory) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    print(f"✅ Successfully sent world_memory to bridge: {result.get('message', 'OK')}")
+                else:
+                    print(f"⚠️ Failed to send world_memory to bridge: HTTP {response.status}")
+    except Exception as e:
+        print(f"⚠️ Error sending world_memory to bridge: {str(e)}")
+
 # Create a single instance of our drone interface
 drone_service = DroneService()
+
+# Global world memory to accumulate detected objects across all detections
+world_memory = {}
 
 class TakeoffTool(BaseTool):
     name: str = "arm_and_takeoff"
@@ -192,6 +218,29 @@ class TakePictureTool(BaseTool):
         mission_log("TAKE_PICTURE", log_type="COMMAND")
         return "Picture taken successfully."
 
+class ClearWorldMemoryTool(BaseTool):
+    name: str = "clear_world_memory"
+    description: str = "Clears all detected objects from the world memory. Use this to reset the object database before starting a new detection session."
+
+    def _run(self, *args, **kwargs) -> str:
+        """Clears world memory"""
+        global world_memory
+        count = len(world_memory)
+        world_memory.clear()
+        return f"Cleared {count} objects from world memory. Memory is now empty."
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Clears world memory"""
+        global world_memory
+        count = len(world_memory)
+        world_memory.clear()
+        mission_log(f"--- Cleared world memory ({count} objects removed)")
+        
+        # Send empty world_memory to the bridge
+        await send_world_memory_to_bridge(world_memory)
+        
+        return f"Cleared {count} objects from world memory. Memory is now empty."
+
 class SenseObjectsTool(BaseTool):
     name: str = "sense_objects"
     description: str = "Uses the drone's camera and YOLO object detection to identify objects in view and store their 3D locations in memory. Call this when you want to know 'what do you see?'"
@@ -241,12 +290,25 @@ class SenseObjectsTool(BaseTool):
                 mission_log("--- No objects detected")
                 return "I looked around but didn't detect any recognizable objects in the current view."
             
-            # Format the detected objects
+            # Format the detected objects and update global world_memory
             mission_log(f"--- Detected {len(objects)} objects")
             result_lines = [f"Detected {len(objects)} object(s):"]
             
-            # Track objects by class for unique IDs
+            # Access global world_memory
+            global world_memory
+            
+            # Track objects by class for unique IDs (need to check existing memory)
             class_counts = {}
+            # Count existing objects in memory to continue numbering
+            for existing_id in world_memory.keys():
+                for class_name_check in set(obj['class_name'] for obj in objects):
+                    if existing_id.startswith(class_name_check + "_"):
+                        try:
+                            num = int(existing_id.split("_")[-1])
+                            if class_name_check not in class_counts or num > class_counts[class_name_check]:
+                                class_counts[class_name_check] = num
+                        except (ValueError, IndexError):
+                            pass
             
             for obj in objects:
                 class_name = obj['class_name']
@@ -261,14 +323,29 @@ class SenseObjectsTool(BaseTool):
                 # Format coordinates
                 x, y, z = map_coords['x'], map_coords['y'], map_coords['z']
                 
+                # Add to global world_memory (merge with existing)
+                world_memory[object_id] = {
+                    "class_name": class_name,
+                    "map_coords": {
+                        "x": x,
+                        "y": y,
+                        "z": z
+                    }
+                }
+                
                 result_lines.append(
                     f"  - {object_id}: {class_name} at map coordinates ({x:.2f}, {y:.2f}, {z:.2f}) meters"
                 )
                 
                 mission_log(f"--- Sensed: {object_id} at ({x:.2f}, {y:.2f}, {z:.2f})")
             
+            # Send complete world_memory to the bridge
+            mission_log(f"--- Total objects in world memory: {len(world_memory)}")
+            await send_world_memory_to_bridge(world_memory)
+            
             result = "\n".join(result_lines)
-            result += "\n\nNote: These objects have been stored in my memory with their precise 3D locations."
+            result += f"\n\nNote: These objects have been stored in my memory with their precise 3D locations."
+            result += f"\nTotal objects in world memory: {len(world_memory)}"
             
             return result
             
@@ -292,6 +369,7 @@ tools = [
     CancelTool(),
     TakePictureTool(),
     SenseObjectsTool(),
+    ClearWorldMemoryTool(),
     ]
 
 def get_tools():

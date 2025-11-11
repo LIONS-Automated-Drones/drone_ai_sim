@@ -145,12 +145,24 @@ async def websocket_handler(websocket):
                 # Optionally cancel the previous mission or inform the client
                 print("Mission already running, cannot process command...")
                 await websocket.send("Please cancel the previous mission or wait for it to complete before sending additional mission commands.")
+            elif msg == "arm":
+                print("Received ARM command from dashboard.")
+                connected = await drone_service.connect()
+                print(f"Vars: connected={connected}")
+                armed = await drone_service.arm()
+                print(f"Vars: connected={connected}, armed={armed}")
+                await websocket.send(message)
             elif msg == "armtakeoff":
                 print("Received ARMTAKEOFF command from dashboard.")
                 connected = await drone_service.connect()
                 armed = await drone_service.arm()
                 takeoff_success = await drone_service.takeoff()
                 print(f"Vars: connected={connected}, armed={armed}, takeoff_success={takeoff_success}")
+                await websocket.send(message)
+            elif msg == "land":
+                print("Received LAND command from dashboard.")
+                land_success = await drone_service.land()
+                print(f"Vars: land_success={land_success}")
                 await websocket.send(message)
             elif msg == "moveforward":
                 print("Received MOVEFORWARD command from dashboard.")

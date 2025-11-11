@@ -1,7 +1,5 @@
 import re
 import json
-import os
-import aiohttp
 from langchain_core.messages import HumanMessage, ToolMessage
 from state import AgentState
 from tools import get_tools
@@ -46,7 +44,6 @@ async def sequential_tool_node(state: AgentState) -> dict:
     """
     A custom tool node that executes only the first tool call found and provides
     feedback to the agent if multiple tools were suggested.
-    Also updates world_memory when sense_objects tool is called.
     """
     last_message = state["messages"][-1]
     
@@ -88,73 +85,7 @@ async def sequential_tool_node(state: AgentState) -> dict:
         )
         messages_to_add.append(HumanMessage(content=feedback_message))
     
-    # Update world_memory if sense_objects was called
-    result = {"messages": messages_to_add}
-    if tool_name == "sense_objects":
-        updated_memory = parse_sense_objects_response(str(response), state.get("world_memory", {}))
-        result["world_memory"] = updated_memory
-        
-        # Send the updated world_memory to the pointcloud bridge
-        await send_world_memory_to_bridge(updated_memory)
-    
-    return result
-
-
-async def send_world_memory_to_bridge(world_memory: dict):
-    """
-    Send the updated world_memory to the pointcloud websocket bridge.
-    
-    Args:
-        world_memory: The world_memory dictionary to send
-    """
-    # Get the Linux IP from environment variable
-    linux_ip = os.environ.get('YOLO_SERVER_IP', 'localhost')
-    bridge_url = f'http://{linux_ip}:5445/world_memory'
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(bridge_url, json=world_memory) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    print(f"✅ Successfully sent world_memory to bridge: {result.get('message', 'OK')}")
-                else:
-                    print(f"⚠️ Failed to send world_memory to bridge: HTTP {response.status}")
-    except Exception as e:
-        print(f"⚠️ Error sending world_memory to bridge: {str(e)}")
-
-
-def parse_sense_objects_response(response: str, current_memory: dict) -> dict:
-    """
-    Parse the sense_objects tool response and update world memory.
-    
-    Args:
-        response: The tool response string
-        current_memory: The current world_memory dictionary
-        
-    Returns:
-        Updated world_memory dictionary
-    """
-    # Create a copy of current memory
-    memory = dict(current_memory)
-    
-    # Parse the response to extract object information
-    # Format: "  - object_id: class_name at map coordinates (x, y, z) meters"
-    import re
-    pattern = r'- ([a-zA-Z0-9_]+): ([a-zA-Z0-9_]+) at map coordinates \(([0-9.-]+), ([0-9.-]+), ([0-9.-]+)\) meters'
-    
-    matches = re.findall(pattern, response)
-    for match in matches:
-        object_id, class_name, x, y, z = match
-        memory[object_id] = {
-            "class_name": class_name,
-            "map_coords": {
-                "x": float(x),
-                "y": float(y),
-                "z": float(z)
-            }
-        }
-    
-    return memory
+    return {"messages": messages_to_add}
 
 def ask_for_clarification_node(state: AgentState) -> dict:
     """
