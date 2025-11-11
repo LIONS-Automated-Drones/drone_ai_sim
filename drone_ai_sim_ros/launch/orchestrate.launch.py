@@ -17,6 +17,9 @@ def generate_launch_description():
         
         # Hardware mode with ZED 2i
         ros2 launch drone_ai_sim_ros orchestrate.launch.py mode:=hardware
+        
+        # Disable YOLO perception node
+        ros2 launch drone_ai_sim_ros orchestrate.launch.py mode:=sim yolo:=false
     """
     
     # Declare launch arguments
@@ -26,9 +29,16 @@ def generate_launch_description():
         description='Operating mode: "sim" for Gazebo simulation or "hardware" for ZED 2i camera'
     )
     
+    yolo_arg = DeclareLaunchArgument(
+        'yolo',
+        default_value='true',
+        description='Enable YOLO perception node: "true" or "false"'
+    )
+    
     def launch_setup(context, *args, **kwargs):
         mode = LaunchConfiguration('mode').perform(context)
         use_sim_time = (mode == 'sim')
+        yolo_enabled = LaunchConfiguration('yolo').perform(context).lower() == 'true'
         
         nodes = []
         
@@ -302,19 +312,20 @@ def generate_launch_description():
         ))
         
         # YOLO Perception Node (BOTH MODES - configured via parameters)
-        nodes.append(Node(
-            package="drone_ai_sim_ros",
-            executable="yolo_perception_node",
-            name="yolo_perception_node",
-            output="screen",
-            parameters=[{
-                "use_sim_time": use_sim_time,
-                "mode": mode,  # Pass mode to the node
-                "model_name": "/home/jamilr/sd1_ws/yolov8n.pt",
-                "confidence_threshold": 0.5,
-                "target_frame": "base_link"
-            }]
-        ))
+        if yolo_enabled:
+            nodes.append(Node(
+                package="drone_ai_sim_ros",
+                executable="yolo_perception_node",
+                name="yolo_perception_node",
+                output="screen",
+                parameters=[{
+                    "use_sim_time": use_sim_time,
+                    "mode": mode,  # Pass mode to the node
+                    "model_name": "/home/jamilr/sd1_ws/yolov8n.pt",
+                    "confidence_threshold": 0.5,
+                    "target_frame": "base_link"
+                }]
+            ))
         
         # Web video server (BOTH MODES)
         nodes.append(Node(
@@ -346,5 +357,6 @@ def generate_launch_description():
     
     return LaunchDescription([
         mode_arg,
+        yolo_arg,
         OpaqueFunction(function=launch_setup)
     ])
