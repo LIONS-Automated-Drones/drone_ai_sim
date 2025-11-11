@@ -35,17 +35,11 @@ source install/setup.bash
 #### Vision System Dependencies
 The YOLO perception node requires specific Python packages. Install them with:
 ```bash
-# Install NumPy 1.x (required for ROS2 Jazzy compatibility)
-pip install --break-system-packages "numpy==1.26.4"
 
-# Install OpenCV (headless version compatible with NumPy 1.x)
-pip install --break-system-packages "opencv-python-headless<4.9.0,>=4.6.0"
-
-# Install Ultralytics YOLO
-pip install --break-system-packages --no-deps "ultralytics>=8.0.0"
-
-# Install Ultralytics dependencies
-pip install --break-system-packages pillow pyyaml requests scipy tqdm psutil py-cpuinfo thop
+pip install "numpy==1.26.4"
+pip install "opencv-python-headless<4.9.0,>=4.6.0"
+pip install --no-deps "ultralytics>=8.0.0"
+pip install pillow pyyaml requests scipy tqdm psutil py-cpuinfo thop
 ```
 
 ```bash

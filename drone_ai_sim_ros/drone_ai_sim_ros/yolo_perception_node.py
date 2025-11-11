@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/connor/rosvenv/bin/python
 """
 YOLO Perception Node for ARES Drone AI System
 
