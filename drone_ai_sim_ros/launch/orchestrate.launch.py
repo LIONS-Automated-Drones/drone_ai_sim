@@ -94,12 +94,12 @@ def generate_launch_description():
         #     arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
         # ),
 
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="basefootprint_alias",
-            arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
-        ),
+        # Node(
+        #     package="tf2_ros",
+        #     executable="static_transform_publisher",
+        #     name="basefootprint_alias",
+        #     arguments=["0", "0", "0", "0", "0", "0", "x500_0/base_footprint", "base_link"],
+        # ),
 
         Node(
             package="tf2_ros",
