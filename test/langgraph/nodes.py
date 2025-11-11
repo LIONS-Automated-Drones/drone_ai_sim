@@ -112,3 +112,16 @@ def ask_for_clarification_node(state: AgentState) -> dict:
         )
 
     return {"messages": [HumanMessage(content=feedback_message)]}
+
+async def invalid_tool_node(state: AgentState):
+    last = state["messages"][-1]
+    bad = last.invalid_tool_calls
+    contentStr = (
+        f"The tool call you attempted was invalid: {bad}. "
+        "Please reformat your tool call according to the schema."
+    )
+    # Construct a repair message
+    repair_msg = HumanMessage(
+        content=contentStr
+    )
+    return {"messages": [repair_msg]}

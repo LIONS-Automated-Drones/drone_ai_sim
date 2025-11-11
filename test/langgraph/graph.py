@@ -1,7 +1,7 @@
 from functools import partial
 from langgraph.graph import StateGraph, END
 from state import AgentState
-from nodes import call_model, sequential_tool_node, ask_for_clarification_node
+from nodes import call_model, sequential_tool_node, ask_for_clarification_node, invalid_tool_node
 from edges import route_agent_response
 
 def build_graph(agent, tool_names):
@@ -13,7 +13,8 @@ def build_graph(agent, tool_names):
     workflow.add_node("agent", partial(call_model, agent=agent))
     workflow.add_node("tools", sequential_tool_node)
     workflow.add_node("clarify", ask_for_clarification_node)
-
+    workflow.add_node("invalid", invalid_tool_node)
+    workflow.add_edge("invalid", "agent")
     workflow.set_entry_point("agent")
 
     workflow.add_conditional_edges(
@@ -22,6 +23,7 @@ def build_graph(agent, tool_names):
         {
             "continue": "tools",
             "clarify": "clarify",
+            "invalid": "invalid",
             "end": END,
         },
     )
