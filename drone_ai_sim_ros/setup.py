@@ -27,10 +27,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'republish = drone_ai_sim_ros.republish:main',
-            'odom_tf_broadcaster = drone_ai_sim_ros.odom_tf_broadcaster:main',
-            'pointcloud_websocket_bridge = drone_ai_sim_ros.pointcloud_websocket_bridge:main',
-            'yolo_perception_node = drone_ai_sim_ros.yolo_perception_node:main'
+            'republish = drone_ai_sim_ros_yolo.republish:main',
+            'odom_tf_broadcaster = drone_ai_sim_ros_yolo.odom_tf_broadcaster:main',
+            'pointcloud_websocket_bridge = drone_ai_sim_ros_yolo.pointcloud_websocket_bridge:main',
+            'yolo_perception_node = drone_ai_sim_ros_yolo.yolo_perception_node:main'
         ],
     },
 )
