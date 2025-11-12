@@ -55,9 +55,13 @@ class YOLOPerceptionNode(Node):
         self.declare_parameter('confidence_threshold', 0.5)
         self.declare_parameter('target_frame', 'map')  # Frame to transform detections to
         self.declare_parameter('mode', 'sim')  # 'sim' for Gazebo or 'hardware' for ZED 2i
-        self.declare_parameter('use_sim_time', True)
-        self.set_parameters([rclpy.parameter.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)])
-        self.get_logger().info("Simulation time (use_sim_time) enabled by default")
+        try:
+            self.set_parameters([
+                rclpy.parameter.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)
+            ])
+            self.get_logger().info("Simulation time (use_sim_time) enabled by default")
+        except Exception as e:
+            self.get_logger().warn(f"Failed to set use_sim_time: {e}")
         model_name = self.get_parameter('model_name').get_parameter_value().string_value
         self.confidence_threshold = self.get_parameter('confidence_threshold').get_parameter_value().double_value
         self.target_frame = self.get_parameter('target_frame').get_parameter_value().string_value
