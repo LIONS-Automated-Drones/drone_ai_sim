@@ -50,6 +50,30 @@ class DroneService:
             if state.is_connected:
                 mission_log("--- Drone connected!")
                 self.is_connected = True
+
+                # Wait for PX4 param system to be ready
+                await asyncio.sleep(1.0)
+
+                # SAFETY CONFIG FOR PILOT TAKEOVER
+                mission_log("--- Setting PX4 safety parameters (RC override + LAND fallback)...")
+
+                try:
+                    # 1. Stick motion cancels Offboard immediately
+                    await self.drone.param.set_param_int("COM_RC_OVERRIDE", 1)
+
+                    # 2. Fallback action when Offboard is cancelled = LAND
+                    # PX4 meaning: 4 = LAND
+                    await self.drone.param.set_param_int("COM_OBL_RC_ACT", 4)
+
+                    # 3. Timeout before fallback (in seconds)
+                    # Small timeout means "instant" handover
+                    await self.drone.param.set_param_float("COM_OF_LOSS_T", 0.3)
+
+                    mission_log("--- RC override + LAND fallback enable SUCCESS ✅")
+                except Exception as e:
+                    mission_log(f"--- Failed to set safety params: {e}")
+                
+                # Show health once
                 async for health in self.drone.telemetry.health():
                     mission_log("--- Health status ---")
                     mission_log(health)
