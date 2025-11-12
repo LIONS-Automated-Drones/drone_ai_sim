@@ -18,7 +18,7 @@ class DroneService:
         
         # Load connection settings from environment variables
         self.virtual = os.getenv('VIRTUAL', 'true').lower() == 'true'
-        self.serial_port = os.getenv('SERIAL_PORT', '/dev/tty.usbserial-0001')
+        self.serial_port = os.getenv('SERIAL_PORT', 'COM3')
         self.baud_rate = int(os.getenv('BAUD_RATE', '57600'))
         self.udp_address = os.getenv('UDP_ADDRESS', 'udp://:14540')
 
