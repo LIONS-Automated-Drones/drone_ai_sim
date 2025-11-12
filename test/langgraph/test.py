@@ -30,13 +30,14 @@ agent_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", "You are a drone pilot AI with computer vision capabilities. Your job is to execute the user's mission by calling tools one at a time. Think step-by-step. "
          "\n\nVISION CAPABILITIES:"
-         "\n- You have a 'sense_objects' tool that uses YOLO object detection to see what's around you"
+         "\n- You have a vision. You are able to call a 'sense_objects' tool that tells you what you see"
          "\n- Use this tool whenever asked 'what do you see?', 'look around', 'detect objects', etc."
-         "\n- Detected objects are stored in your world memory with their 3D map coordinates"
+         "\n- Detected objects are shown you as a ToolMessage"
          "\n- Your world model will be shown to you automatically when objects are detected"
          "\n\nIMPORTANT RULES:"
          "\n- Call tools ONE AT A TIME using the proper tool-calling feature"
          "\n- NEVER write JSON in your text responses - use tool calls instead"
+         "\n- NEVER write python code in your text responses - use tool calls instead"
          "\n- When the mission is complete, call 'mission_complete' with a summary"
          "\n\nNow execute the user's request."),
         MessagesPlaceholder(variable_name="messages"),
@@ -56,10 +57,11 @@ manual_override_engaged = asyncio.Event()
 async def handle_mission(mission_prompt, send_message_callback):
     """Handles a single mission prompt, streaming back results."""
     try:
-        # Initialize state with empty world memory
+        # Initialize state with empty world memory and no drone state
         initial_state = {
             "messages": [HumanMessage(content=mission_prompt)],
-            "world_memory": {}
+            "world_memory": {},
+            "drone_state": None
         }
         mission_log(f"--- Starting mission with prompt: {mission_prompt}")
         async for event in app.astream(initial_state):
@@ -71,9 +73,10 @@ async def handle_mission(mission_prompt, send_message_callback):
                             last_msg = v["messages"][-1]
                             mission_log(f"--- Message type: {type(last_msg).__name__}")
                             message_content = last_msg.content
-                            if message_content:
-                                mission_log(f"--- Sending message: {message_content[:100]}...")
+                            if message_content and last_msg.type == "ai":
                                 await send_message_callback(message_content)
+                            elif message_content and last_msg.type == "tool":
+                                mission_log(f"--- Tool message: {message_content}")
                             # Log tool calls if present
                             if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
                                 mission_log(f"--- Tool calls detected: {[tc['name'] for tc in last_msg.tool_calls]}")
@@ -145,6 +148,16 @@ async def websocket_handler(websocket):
                 # Optionally cancel the previous mission or inform the client
                 print("Mission already running, cannot process command...")
                 await websocket.send("Please cancel the previous mission or wait for it to complete before sending additional mission commands.")
+            elif msg == "rotatecw":
+                print("Received ROTATECW command from dashboard.")
+                rotate_success = await drone_service.rotate(90, "cw")
+                print(f"Vars: rotate_success={rotate_success}")
+                await websocket.send(message)
+            elif msg == "rotateccw":
+                print("Received ROTATECCW command from dashboard.")
+                rotate_success = await drone_service.rotate(90, "ccw")
+                print(f"Vars: rotate_success={rotate_success}")
+                await websocket.send(message)
             elif msg == "arm":
                 print("Received ARM command from dashboard.")
                 connected = await drone_service.connect()

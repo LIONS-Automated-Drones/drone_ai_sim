@@ -96,7 +96,7 @@ sudo apt install python3.12-venv
 python3 -m venv drone_venv
 source drone_venv/bin/activate
 pip install dotenv setuptools langchain langchain-openai langgraph mavsdk
-pip install websockets asyncio
+pip install websockets asyncio aiohttp
 cd ~/sd1_ws/drone_ai_sim/test/langgraph
 touch .env
 nano .env

@@ -4,6 +4,7 @@ import json
 import time
 from mavsdk import System
 from mavsdk.action import OrbitYawBehavior
+from mavsdk.offboard import PositionNedYaw, OffboardError
 from utils import calculate_distance
 from mission_log import mission_log, set_telemetry_callback, send_telemetry
 from environment_settings import ENVIRONMENT_SETTINGS
@@ -104,6 +105,7 @@ class DroneService:
         mission_log(f"--- Stored takeoff position: {self.takeoff_position}")
         
         mission_log("--- Taking off...")
+        await self.drone.action.set_takeoff_altitude(1.2)
         takeoff_altitude = await self.drone.action.get_takeoff_altitude()
         current_altitude = position.absolute_altitude_m
         target_altitude = current_altitude + takeoff_altitude
@@ -111,7 +113,6 @@ class DroneService:
         
         # Start telemetry streaming after storing takeoff position
         await self.start_telemetry_streaming()
-        
         await self.drone.action.takeoff()
         i = 0
         while True:
@@ -154,7 +155,7 @@ class DroneService:
         if not self.is_connected:
             mission_log("--- Drone not connected. Cannot go to location.")
             return False
-        mission_log(f"--- Flying to {latitude_deg}, {longitude_deg} at {altitude_m}m...")
+        mission_log(f"--- Flying to {latitude_deg}, {longitude_deg} at {altitude_m}m with yaw {yaw_deg}°...")
         await self.drone.action.goto_location(latitude_deg, longitude_deg, altitude_m, yaw_deg)
         
         while True:
@@ -165,7 +166,7 @@ class DroneService:
                 latitude_deg,
                 longitude_deg
             )
-            if distance < 0.5:  # 1-meter tolerance
+            if distance < 0.2:  # 1-meter tolerance
                 mission_log("--- Arrived at target location.")
                 break
             await asyncio.sleep(1)
@@ -212,7 +213,7 @@ class DroneService:
     
     async def rotate(self, degrees: float, direction: str):
         """
-        Rotates the drone by a specified number of degrees in the given direction.
+        Rotates the drone by a specified number of degrees in the given direction using Offboard mode.
         Args:
             degrees (float): Number of degrees to rotate (0-360).
             direction (str): Direction to rotate - 'cw' for clockwise, 'ccw' for counterclockwise.
@@ -246,31 +247,95 @@ class DroneService:
         
         mission_log(f"--- Rotating {degrees}° {direction.upper()} from {current_heading:.1f}° to {new_heading:.1f}°...")
         
-        # Rotate in place by going to current position with new heading
-        success = await self.goto_location(
-            telemetry["latitude_deg"],
-            telemetry["longitude_deg"],
-            telemetry["absolute_altitude_m"],
-            new_heading
-        )
-        
-        if success:
-            mission_log(f"--- Rotation complete. New heading: {new_heading:.1f}°")
-        else:
-            mission_log("--- Rotation failed.")
+        try:
+            # Get current position in NED coordinates relative to takeoff
+            position_ned = await anext(self.drone.telemetry.position_velocity_ned())
             
-        i = 0
-        while True:
-            heading = await anext(self.drone.telemetry.heading())
-            if abs(heading.heading_deg - new_heading) < 2:
-                mission_log("--- Drone has reached new heading.")
-                break
-            await asyncio.sleep(1)
-            if i % 10 == 0:
-                mission_log(f"--- Drone has not reached new heading. Current heading: {heading.heading_deg:.1f}°, new heading: {new_heading:.1f}°")
-            i += 1
-        
-        return success
+            # Start offboard mode
+            mission_log("--- Starting offboard mode for rotation...")
+            
+            # Set initial position setpoint (current position)
+            await self.drone.offboard.set_position_ned(
+                PositionNedYaw(
+                    position_ned.position.north_m,
+                    position_ned.position.east_m,
+                    position_ned.position.down_m,
+                    current_heading
+                )
+            )
+            
+            try:
+                await self.drone.offboard.start()
+            except OffboardError as e:
+                # If already in offboard mode, continue
+                if "COMMAND_DENIED" not in str(e):
+                    raise
+                mission_log("--- Already in offboard mode, continuing...")
+            
+            # Gradually rotate to new heading by sending setpoints
+            mission_log("--- Sending rotation setpoints...")
+            rotation_duration = 3.0  # 3 seconds for rotation
+            steps = 30  # 10Hz for 3 seconds
+            
+            for step in range(steps + 1):
+                # Interpolate heading
+                progress = step / steps
+                interpolated_heading = current_heading + (new_heading - current_heading) * progress
+                if direction == 'cw' and new_heading < current_heading:
+                    interpolated_heading = current_heading + ((new_heading + 360 - current_heading) * progress)
+                elif direction == 'ccw' and new_heading > current_heading:
+                    interpolated_heading = current_heading - ((current_heading + 360 - new_heading) * progress)
+                interpolated_heading = interpolated_heading % 360
+                
+                # Send position setpoint with interpolated yaw
+                await self.drone.offboard.set_position_ned(
+                    PositionNedYaw(
+                        position_ned.position.north_m,
+                        position_ned.position.east_m,
+                        position_ned.position.down_m,
+                        interpolated_heading
+                    )
+                )
+                await asyncio.sleep(0.1)  # 10Hz
+            
+            # Wait for heading to stabilize
+            mission_log("--- Waiting for heading to stabilize...")
+            i = 0
+            while True:
+                heading = await anext(self.drone.telemetry.heading())
+                heading_diff = abs(heading.heading_deg - new_heading)
+                
+                # Handle wraparound (e.g., 359° to 1°)
+                if heading_diff > 180:
+                    heading_diff = 360 - heading_diff
+                
+                if heading_diff < 3:
+                    mission_log(f"--- Rotation complete. New heading: {heading.heading_deg:.1f}°")
+                    break
+                
+                await asyncio.sleep(0.5)
+                if i % 10 == 0:
+                    mission_log(f"--- Rotating... Current heading: {heading.heading_deg:.1f}°, target: {new_heading:.1f}°")
+                i += 1
+                
+                # Timeout after 15 seconds
+                if i > 30:
+                    mission_log("--- Rotation timeout. Heading may not have stabilized properly.")
+                    break
+            
+            # Keep offboard mode active - don't stop it as other commands may need it
+            mission_log("--- Rotation complete, keeping offboard mode active")
+            
+            return True
+            
+        except Exception as e:
+            mission_log(f"--- Error during rotation: {e}")
+            # Try to stop offboard mode on error
+            try:
+                await self.drone.offboard.stop()
+            except:
+                pass
+            return False
     
     async def get_telemetry(self):
         """

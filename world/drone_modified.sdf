@@ -78,6 +78,7 @@
       <ros>
         <namespace>/x500</namespace>
       </ros>
+      <dimensions>3</dimensions>
       <odom_topic>odom</odom_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_link</child_frame_id>
