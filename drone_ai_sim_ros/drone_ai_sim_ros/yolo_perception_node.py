@@ -15,8 +15,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
 from stereo_msgs.msg import DisparityImage
 from geometry_msgs.msg import Point, PointStamped
-from ares_interfaces.srv import DetectObjects
-from ares_interfaces.msg import SensedObject
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError

@@ -16,7 +16,6 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>image_geometry</depend>
-  <depend>ares_interfaces</depend>
   
   <!-- Simulation dependencies (for Gazebo mode) -->
   <exec_depend condition="$ROS_DISTRO == jazzy">ros_gz_bridge</exec_depend>
