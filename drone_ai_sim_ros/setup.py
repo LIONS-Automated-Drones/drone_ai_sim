@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'drone_ai_sim_ros'
+package_name = 'drone_ai_sim_ros_yolo'
 
 setup(
     name=package_name,
