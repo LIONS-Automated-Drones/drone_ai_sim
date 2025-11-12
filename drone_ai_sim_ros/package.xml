@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>drone_ai_sim_ros</name>
+  <name>drone_ai_sim_ros_yolo</name>
   <version>0.0.0</version>
   <description>ROS 2 nodes for drone AI simulation and hardware integration</description>
   <maintainer email="connor@todo.todo">connor</maintainer>
