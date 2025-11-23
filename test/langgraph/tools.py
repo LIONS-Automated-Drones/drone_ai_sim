@@ -1,10 +1,40 @@
 import asyncio
+import time
+import os
+import aiohttp
 from langchain.tools import BaseTool
 from drone_service import DroneService
 from utils import get_bearing_and_move, get_cardinal_and_move
+from mission_log import mission_log
+
+
+async def send_world_memory_to_bridge(world_memory: dict):
+    """
+    Send the updated world_memory to the pointcloud websocket bridge.
+    
+    Args:
+        world_memory: The world_memory dictionary to send
+    """
+    # Get the server IP from environment variable
+    server_ip = os.environ.get('YOLO_SERVER_IP', 'localhost')
+    bridge_url = f'http://{server_ip}:5445/world_memory'
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(bridge_url, json=world_memory) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    print(f"✅ Successfully sent world_memory to bridge: {result.get('message', 'OK')}")
+                else:
+                    print(f"⚠️ Failed to send world_memory to bridge: HTTP {response.status}")
+    except Exception as e:
+        print(f"⚠️ Error sending world_memory to bridge: {str(e)}")
 
 # Create a single instance of our drone interface
 drone_service = DroneService()
+
+# Global world memory to accumulate detected objects across all detections
+world_memory = {}
 
 class TakeoffTool(BaseTool):
     name: str = "arm_and_takeoff"
@@ -107,7 +137,7 @@ class OrbitTool(BaseTool):
     async def _arun(self, radius_m: float, velocity_ms: float, *args, **kwargs) -> str:
         """Orbits the drone."""
         print(f"--- EXECUTING TOOL: Orbiting with radius {radius_m}m... ---")
-        success = await drone_service.do_orbit(radius_m, velocity_ms)
+        success = await drone_service.do_orbit(float(radius_m), float(velocity_ms))
         return "Orbit complete." if success else "Orbit failed."
 
 class RTLTool(BaseTool):
@@ -136,6 +166,19 @@ class TelemetryTool(BaseTool):
         data = await drone_service.get_telemetry()
         return str(data) if data else "Could not retrieve telemetry."
 
+class RotateTool(BaseTool):
+    name: str = "rotate"
+    description: str = "Rotates the drone by a specified number of degrees (0-360) in the given direction ('cw' for clockwise, 'ccw' for counterclockwise)."
+
+    def _run(self, degrees: float, direction: str, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, degrees: float, direction: str, *args, **kwargs) -> str:
+        """Rotates the drone."""
+        print(f"--- EXECUTING TOOL: Rotating {degrees}° {direction.upper()}... ---")
+        success = await drone_service.rotate(degrees, direction)
+        return f"Successfully rotated {degrees}° {direction.upper()}." if success else f"Failed to rotate {degrees}° {direction.upper()}."
+
 class MissionCompleteTool(BaseTool):
     name: str = "mission_complete"
     description: str = "Call this tool when the entire mission is successfully completed. Provide a final summary of the mission as an argument."
@@ -144,11 +187,190 @@ class MissionCompleteTool(BaseTool):
         """Marks the mission as complete."""
         return f"Mission complete: {summary}"
 
-    async def _arun(self, summary: str) -> str:
+    async def _arun(self, *args, **kwargs) -> str:
         """Marks the mission as complete."""
+        summary = kwargs.get("summary") or kwargs.get("message") or (args[0] if args else "")
         return f"Mission complete: {summary}"
-    
-tools = [TakeoffTool(), LandTool(), MoveRelativeBodyTool(), MoveRelativeNorthTool(), OrbitTool(), RTLTool(), TelemetryTool(), MissionCompleteTool()]
+
+class CancelTool(BaseTool):
+    name: str = "cancel_mission"
+    description: str = "Cancels any currently running commands then hovers in place."
+
+    def _run(self, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Cancels current mission and hovers in place"""
+        print("--- EXECUTING TOOL: Canceling and holding... ---")
+        success = await drone_service.cancel()
+        return "Cancel complete." if success else "Cancel failed."
+
+class TakePictureTool(BaseTool):
+    name: str = "take_picture"
+    description: str = "Takes a picture with the drone's camera."
+
+    def _run(self, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Takes a picture"""
+        print("--- EXECUTING TOOL: Taking picture... ---")
+        mission_log("TAKE_PICTURE", log_type="COMMAND")
+        return "Picture taken successfully."
+
+class ClearWorldMemoryTool(BaseTool):
+    name: str = "clear_world_memory"
+    description: str = "Clears all detected objects from the world memory. Use this to reset the object database before starting a new detection session."
+
+    def _run(self, *args, **kwargs) -> str:
+        """Clears world memory"""
+        global world_memory
+        count = len(world_memory)
+        world_memory.clear()
+        return f"Cleared {count} objects from world memory. Memory is now empty."
+
+    async def _arun(self, *args, **kwargs) -> str:
+        """Clears world memory"""
+        global world_memory
+        count = len(world_memory)
+        world_memory.clear()
+        mission_log(f"--- Cleared world memory ({count} objects removed)")
+        
+        # Send empty world_memory to the bridge
+        await send_world_memory_to_bridge(world_memory)
+        
+        return f"Cleared {count} objects from world memory. Memory is now empty."
+
+class SenseObjectsTool(BaseTool):
+    name: str = "sense_objects"
+    description: str = "Uses the drone's camera and YOLO object detection to identify objects in view and store their 3D locations in memory. Call this when you want to know 'what do you see?'"
+
+    def _run(self, yolo_ip: str = None, *args, **kwargs) -> str:
+        raise NotImplementedError("This tool does not support synchronous execution.")
+
+    async def _arun(self, yolo_ip: str = None, *args, **kwargs) -> str:
+        """Triggers object detection and returns detected objects with their 3D positions via HTTP"""
+        print("--- EXECUTING TOOL: Sensing objects... ---")
+        
+        # Get YOLO server IP from parameter or environment variable
+        if yolo_ip is None:
+            yolo_ip = os.environ.get('YOLO_SERVER_IP', 'localhost')
+        
+        yolo_url = f"http://{yolo_ip}:5444/detect"
+        mission_log(f"--- Connecting to YOLO server at {yolo_url}")
+        
+        try:
+            # Make HTTP POST request to the YOLO detection endpoint
+            timeout = aiohttp.ClientTimeout(total=20.0)  # YOLO can take a few seconds
+            
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                mission_log("--- Sending detection request...")
+                
+                try:
+                    async with session.get(yolo_url) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            return f"Error: YOLO server returned status {response.status}: {error_text}"
+                        
+                        data = await response.json()
+                        
+                except aiohttp.ClientConnectorError:
+                    return f"Error: Could not connect to YOLO server at {yolo_url}. Is the yolo_perception_node running?"
+                except asyncio.TimeoutError:
+                    return "Error: Request to YOLO server timed out after 20 seconds."
+            
+            # Check response
+            if not data.get('success', False):
+                error = data.get('error', 'Unknown error')
+                return f"Error: Object detection failed: {error}"
+            
+            objects = data.get('objects', [])
+            
+            if not objects:
+                mission_log("--- No objects detected")
+                return "I looked around but didn't detect any recognizable objects in the current view."
+            
+            # Format the detected objects and update global world_memory
+            mission_log(f"--- Detected {len(objects)} objects")
+            result_lines = [f"Detected {len(objects)} object(s):"]
+            
+            # Access global world_memory
+            global world_memory
+            
+            # Track objects by class for unique IDs (need to check existing memory)
+            class_counts = {}
+            # Count existing objects in memory to continue numbering
+            for existing_id in world_memory.keys():
+                for class_name_check in set(obj['class_name'] for obj in objects):
+                    if existing_id.startswith(class_name_check + "_"):
+                        try:
+                            num = int(existing_id.split("_")[-1])
+                            if class_name_check not in class_counts or num > class_counts[class_name_check]:
+                                class_counts[class_name_check] = num
+                        except (ValueError, IndexError):
+                            pass
+            
+            for obj in objects:
+                class_name = obj['class_name']
+                map_coords = obj['map_coords']
+                
+                # Generate unique ID
+                if class_name not in class_counts:
+                    class_counts[class_name] = 0
+                class_counts[class_name] += 1
+                object_id = f"{class_name}_{class_counts[class_name]}"
+                
+                # Format coordinates
+                x, y, z = map_coords['x'], map_coords['y'], map_coords['z']
+                
+                # Add to global world_memory (merge with existing)
+                world_memory[object_id] = {
+                    "class_name": class_name,
+                    "map_coords": {
+                        "x": x,
+                        "y": y,
+                        "z": z
+                    }
+                }
+                
+                result_lines.append(
+                    f"  - {object_id}: {class_name} at map coordinates ({x:.2f}, {y:.2f}, {z:.2f}) meters"
+                )
+                
+                mission_log(f"--- Sensed: {object_id} at ({x:.2f}, {y:.2f}, {z:.2f})")
+            
+            # Send complete world_memory to the bridge
+            mission_log(f"--- Total objects in world memory: {len(world_memory)}")
+            await send_world_memory_to_bridge(world_memory)
+            
+            result = "\n".join(result_lines)
+            result += f"\n\nNote: These objects have been stored in my memory with their precise 3D locations."
+            result += f"\nTotal objects in world memory: {len(world_memory)}"
+            
+            return result
+            
+        except Exception as e:
+            error_msg = f"Error during object detection: {str(e)}"
+            mission_log(f"--- {error_msg}")
+            import traceback
+            mission_log(traceback.format_exc())
+            return error_msg
+
+tools = [
+    TakeoffTool(),
+    LandTool(),
+    MoveRelativeBodyTool(),
+    MoveRelativeNorthTool(),
+    OrbitTool(),
+    RTLTool(),
+    TelemetryTool(),
+    RotateTool(),
+    MissionCompleteTool(),
+    CancelTool(),
+    TakePictureTool(),
+    SenseObjectsTool(),
+    ClearWorldMemoryTool(),
+    ]
 
 def get_tools():
     return tools

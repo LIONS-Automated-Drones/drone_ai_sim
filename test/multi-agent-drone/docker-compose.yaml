@@ -1,0 +1,23 @@
+# docker-compose.yml
+services:
+  agent-app:
+    build: .
+    container_name: agent-app
+    # Mount the code for live reloading during development
+    volumes:
+      - ./app:/app
+    # Pass the .env file to the container
+    env_file:
+      - .env
+    environment:
+      # Allow override for dev vs prod
+      - APP_ENV=${APP_ENV:-dev}
+      # Configure Ollama running on the Mac host
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://192.168.64.1:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2-vision:11b}
+    # This allows the container to resolve host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # So we can type into the app
+    stdin_open: true
+    tty: true
